@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AiOutlineBell, AiOutlineMail, AiOutlineCheck, AiOutlineEye } from 'react-icons/ai'
 import Button from '../../components/common/Button'
 import Spinner from '../../components/common/Spinner'
@@ -6,10 +7,20 @@ import useNotifications from '../../hooks/useNotifications'
 
 const NotificationsPage = () => {
   const { notifications, loading, fetchNotifications, markAsRead, markAllAsRead } = useNotifications()
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchNotifications()
   }, []) // eslint-disable-line
+
+  const handleNotificationClick = async (n) => {
+    if (!n.isRead) {
+      await markAsRead(n._id)
+    }
+    if (n.relatedLink) {
+      navigate(n.relatedLink)
+    }
+  }
 
   return (
     <div className="animate-fade-in space-y-6 max-w-4xl mx-auto">
@@ -39,7 +50,7 @@ const NotificationsPage = () => {
           {notifications.map((n) => (
             <div
               key={n._id}
-              onClick={() => !n.isRead && markAsRead(n._id)}
+              onClick={() => handleNotificationClick(n)}
               className={`card p-4 flex items-start gap-4 transition-all duration-200 cursor-pointer border-l-4 ${
                 !n.isRead
                   ? 'bg-dark-800 border-l-primary-500 hover:border-l-primary-400'

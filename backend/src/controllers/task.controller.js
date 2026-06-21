@@ -150,6 +150,7 @@ const createTask = async (req, res) => {
         user: task.assignedTo._id,
         type: 'assignment',
         message: `You have been assigned to task "${task.title}" by ${req.user.name}.`,
+        relatedLink: `/tasks/${task._id}`,
       });
 
       await sendEmail({
@@ -265,6 +266,7 @@ const updateTask = async (req, res) => {
             user: newAssignee._id,
             type: 'assignment',
             message: `Task "${task.title}" has been assigned to you by ${req.user.name}.`,
+            relatedLink: `/tasks/${task._id}`,
           });
 
           await sendEmail({

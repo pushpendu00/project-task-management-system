@@ -15,6 +15,11 @@ const getDashboardStats = async (req, res) => {
     if (role === 'admin') {
       // Admin dashboard metrics
       const totalProjects = await Project.countDocuments({});
+      const activeProjects = await Project.countDocuments({ status: 'active' });
+      const completedProjects = await Project.countDocuments({ status: 'completed' });
+      const planningProjects = await Project.countDocuments({ status: 'planning' });
+      const onHoldProjects = await Project.countDocuments({ status: 'on-hold' });
+      
       const totalTasks = await Task.countDocuments({});
       const activeEmployees = await User.countDocuments({ role: 'member', isActive: true });
       const completedTasks = await Task.countDocuments({ status: 'completed' });
@@ -34,15 +39,41 @@ const getDashboardStats = async (req, res) => {
       }
       const progressOverview = projects.length > 0 ? Math.round(totalProgress / projects.length) : 0;
 
+      // Completion trend (last 7 days)
+      const completionTrend = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+        const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+        const count = await Task.countDocuments({
+          status: 'completed',
+          updatedAt: { $gte: startOfDay, $lte: endOfDay }
+        });
+        completionTrend.push({
+          day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+          count
+        });
+      }
+
       return res.status(200).json({
         success: true,
         stats: {
           totalProjects,
+          activeProjects,
+          completedProjects,
           totalTasks,
           activeEmployees,
           completedTasks,
           overdueTasks,
           progressOverview,
+          projectBreakdown: {
+            planning: planningProjects,
+            active: activeProjects,
+            completed: completedProjects,
+            onHold: onHoldProjects,
+          },
+          completionTrend
         }
       });
     } else if (role === 'manager') {
@@ -53,10 +84,16 @@ const getDashboardStats = async (req, res) => {
           { assignedManager: req.user._id },
           { 'members.user': req.user._id },
         ],
-      }).select('_id');
+      }).select('_id status');
+      
       const managedIds = managedProjects.map(p => p._id);
 
-      const projectsCount = managedIds.length;
+      const totalProjects = managedProjects.length;
+      const activeProjects = managedProjects.filter(p => p.status === 'active').length;
+      const completedProjects = managedProjects.filter(p => p.status === 'completed').length;
+      const planningProjects = managedProjects.filter(p => p.status === 'planning').length;
+      const onHoldProjects = managedProjects.filter(p => p.status === 'on-hold').length;
+
       const activeTasks = await Task.countDocuments({
         project: { $in: managedIds },
         status: { $ne: 'completed' }
@@ -80,13 +117,40 @@ const getDashboardStats = async (req, res) => {
       ]);
       const employeeProductivityHours = hoursLoggedData.length > 0 ? hoursLoggedData[0].total : 0;
 
+      // Completion trend (last 7 days for managed tasks)
+      const completionTrend = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+        const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+        const count = await Task.countDocuments({
+          project: { $in: managedIds },
+          status: 'completed',
+          updatedAt: { $gte: startOfDay, $lte: endOfDay }
+        });
+        completionTrend.push({
+          day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+          count
+        });
+      }
+
       return res.status(200).json({
         success: true,
         stats: {
-          managedProjects: projectsCount,
+          totalProjects,
+          activeProjects,
+          completedProjects,
           activeTasks,
           upcomingDeadlines,
           employeeProductivity: employeeProductivityHours,
+          projectBreakdown: {
+            planning: planningProjects,
+            active: activeProjects,
+            completed: completedProjects,
+            onHold: onHoldProjects,
+          },
+          completionTrend
         }
       });
     } else {
@@ -103,6 +167,32 @@ const getDashboardStats = async (req, res) => {
         dueDate: { $gte: now, $lte: fortyEightHoursLater }
       });
 
+      // Projects employee is part of
+      const userProjects = await Project.find({ 'members.user': req.user._id }).select('_id status');
+      const totalProjects = userProjects.length;
+      const activeProjects = userProjects.filter(p => p.status === 'active').length;
+      const completedProjects = userProjects.filter(p => p.status === 'completed').length;
+      const planningProjects = userProjects.filter(p => p.status === 'planning').length;
+      const onHoldProjects = userProjects.filter(p => p.status === 'on-hold').length;
+
+      // Completion trend (last 7 days for assigned tasks)
+      const completionTrend = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+        const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+        const count = await Task.countDocuments({
+          assignedTo: req.user._id,
+          status: 'completed',
+          updatedAt: { $gte: startOfDay, $lte: endOfDay }
+        });
+        completionTrend.push({
+          day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+          count
+        });
+      }
+
       // Recent Activity Logs related to this user
       const recentActivity = await AuditLog.find({ user: req.user._id })
         .sort({ timestamp: -1 })
@@ -115,6 +205,16 @@ const getDashboardStats = async (req, res) => {
           completedTasks,
           tasksDueSoon,
           recentActivity,
+          totalProjects,
+          activeProjects,
+          completedProjects,
+          projectBreakdown: {
+            planning: planningProjects,
+            active: activeProjects,
+            completed: completedProjects,
+            onHold: onHoldProjects,
+          },
+          completionTrend
         }
       });
     }

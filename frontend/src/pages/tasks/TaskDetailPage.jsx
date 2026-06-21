@@ -16,6 +16,7 @@ import Button from '../../components/common/Button'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 import { formatDate, formatRelativeTime } from '../../utils/formatDate'
+import ConfirmModal from '../../components/common/ConfirmModal'
 
 const getHistoryMessage = (log) => {
   const userName = log.user?.name || 'System Actor'
@@ -62,7 +63,7 @@ const TaskDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const [selectedTask, setSelectedTask] = useRecoilState(selectedTaskAtom)
-  const { fetchTaskById, updateTask, deleteTask, addComment } = useTasks()
+  const { fetchTaskById, updateTask, deleteTask, addComment, loading: taskLoading } = useTasks()
   const { user } = useAuth()
 
   const [activeTab, setActiveTab] = useState('details') // 'details', 'worklogs'
@@ -83,6 +84,7 @@ const TaskDetailPage = () => {
   const [logAttach, setLogAttach] = useState('')
   const [submitLogLoading, setSubmitLogLoading] = useState(false)
   const [replyInputs, setReplyInputs] = useState({}) // { logId: 'reply text' }
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
 
   // Estimated Hours debounced state
   const [localHours, setLocalHours] = useState('')
@@ -162,16 +164,19 @@ const TaskDetailPage = () => {
     }
   }
 
-  const handleDeleteTask = async () => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      const projectId = selectedTask.project?._id
-      await deleteTask(id)
-      setSelectedTask(null)
-      if (projectId) {
-        navigate(`/projects/${projectId}`)
-      } else {
-        navigate('/tasks')
-      }
+  const handleDeleteClick = () => {
+    setIsConfirmDeleteOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    setIsConfirmDeleteOpen(false)
+    const projectId = selectedTask.project?._id
+    await deleteTask(id)
+    setSelectedTask(null)
+    if (projectId) {
+      navigate(`/projects/${projectId}`)
+    } else {
+      navigate('/tasks')
     }
   }
 
@@ -712,7 +717,7 @@ const TaskDetailPage = () => {
                 <Button
                   variant="danger"
                   size="sm"
-                  onClick={handleDeleteTask}
+                  onClick={handleDeleteClick}
                   className="w-full justify-center text-xs py-2 bg-red-950/20 border border-red-800/40 text-red-400 hover:bg-red-900 hover:text-white"
                   id="task-detail-delete-btn"
                 >
@@ -723,6 +728,17 @@ const TaskDetailPage = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={isConfirmDeleteOpen}
+        onClose={() => setIsConfirmDeleteOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Task"
+        message="Are you sure you want to delete this task? This action is permanent and cannot be undone."
+        confirmText="Delete Task"
+        type="danger"
+        loading={taskLoading}
+      />
     </div>
   )
 }

@@ -6,6 +6,7 @@ import Button from '../../components/common/Button'
 import Input from '../../components/common/Input'
 import Modal from '../../components/common/Modal'
 import Spinner from '../../components/common/Spinner'
+import ConfirmModal from '../../components/common/ConfirmModal'
 
 const UsersPage = () => {
   const [users, setUsers] = useState([])
@@ -13,6 +14,7 @@ const UsersPage = () => {
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
+  const [confirmToggleUser, setConfirmToggleUser] = useState(null)
   
   // Form fields
   const [form, setForm] = useState({
@@ -108,24 +110,25 @@ const UsersPage = () => {
     }
   }
 
-  const toggleDeactivate = async (user) => {
-    const confirmMsg = user.isActive
-      ? `Are you sure you want to deactivate ${user.name}?`
-      : `Are you sure you want to reactivate ${user.name}?`;
-    
-    if (!window.confirm(confirmMsg)) return;
+  const toggleDeactivateClick = (user) => {
+    setConfirmToggleUser(user)
+  }
 
+  const handleConfirmToggleDeactivate = async () => {
+    if (!confirmToggleUser) return
+    const u = confirmToggleUser
+    setConfirmToggleUser(null)
     try {
-      if (user.isActive) {
+      if (u.isActive) {
         // Deactivate (DELETE endpoint deactivates user)
-        await api.delete(`/users/${user._id}`)
+        await api.delete(`/users/${u._id}`)
         toast.success('User deactivated successfully')
-        setUsers(prev => prev.map(u => u._id === user._id ? { ...u, isActive: false } : u))
+        setUsers(prev => prev.map(item => item._id === u._id ? { ...item, isActive: false } : item))
       } else {
         // Reactivate (PUT update status to true)
-        const { data } = await api.put(`/users/${user._id}`, { isActive: true })
+        const { data } = await api.put(`/users/${u._id}`, { isActive: true })
         toast.success('User reactivated successfully')
-        setUsers(prev => prev.map(u => u._id === user._id ? data.user : u))
+        setUsers(prev => prev.map(item => item._id === u._id ? data.user : item))
       }
     } catch (error) {
       toast.error('Failed to change user status')
@@ -220,7 +223,7 @@ const UsersPage = () => {
                           <AiOutlineEdit size={16} />
                         </button>
                         <button
-                          onClick={() => toggleDeactivate(u)}
+                          onClick={() => toggleDeactivateClick(u)}
                           className={`p-1.5 rounded hover:bg-dark-700/50 transition-colors ${
                             u.isActive ? 'text-slate-500 hover:text-red-400' : 'text-slate-500 hover:text-green-400'
                           }`}
@@ -299,6 +302,19 @@ const UsersPage = () => {
           </div>
         </form>
       </Modal>
+      <ConfirmModal
+        isOpen={!!confirmToggleUser}
+        onClose={() => setConfirmToggleUser(null)}
+        onConfirm={handleConfirmToggleDeactivate}
+        title={confirmToggleUser?.isActive ? 'Deactivate User' : 'Reactivate User'}
+        message={
+          confirmToggleUser?.isActive
+            ? `Are you sure you want to deactivate ${confirmToggleUser?.name}? They will not be able to log in or access task details.`
+            : `Are you sure you want to reactivate ${confirmToggleUser?.name}? They will regain access to their assigned projects and tasks.`
+        }
+        confirmText={confirmToggleUser?.isActive ? 'Deactivate' : 'Reactivate'}
+        type={confirmToggleUser?.isActive ? 'danger' : 'warning'}
+      />
     </div>
   )
 }

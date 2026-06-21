@@ -4,13 +4,14 @@ import { tasksByStatusSelector } from '../../recoil/selectors/taskSelectors'
 import TaskCard from './TaskCard'
 import useTasks from '../../hooks/useTasks'
 import toast from 'react-hot-toast'
+import { FiList, FiPlay, FiEye, FiCheckCircle, FiAlertOctagon } from 'react-icons/fi'
 
 const COLUMNS = [
-  { key: 'todo',        label: 'To Do',       color: 'bg-slate-500'  },
-  { key: 'in-progress', label: 'In Progress',  color: 'bg-blue-500'   },
-  { key: 'in-review',   label: 'In Review',    color: 'bg-yellow-500' },
-  { key: 'completed',   label: 'Completed',    color: 'bg-green-500'  },
-  { key: 'blocked',     label: 'Blocked',      color: 'bg-red-500'    },
+  { key: 'todo',        label: 'To Do',       color: 'bg-cyan-600',   icon: FiList         },
+  { key: 'in-progress', label: 'In Progress',  color: 'bg-amber-600',  icon: FiPlay         },
+  { key: 'in-review',   label: 'In Review',    color: 'bg-indigo-600', icon: FiEye          },
+  { key: 'completed',   label: 'Completed',    color: 'bg-green-600',  icon: FiCheckCircle  },
+  { key: 'blocked',     label: 'Blocked',      color: 'bg-red-600',    icon: FiAlertOctagon },
 ]
 
 const KanbanBoard = ({ onTaskClick }) => {
@@ -38,7 +39,7 @@ const KanbanBoard = ({ onTaskClick }) => {
 
   const handleDrop = async (e, colKey) => {
     e.preventDefault()
-    setDraggedOverCol(null)
+    setDraggedOverCol(colKey)
     const taskId = e.dataTransfer.getData('text/plain')
     if (!taskId) return
 
@@ -46,12 +47,14 @@ const KanbanBoard = ({ onTaskClick }) => {
       await updateTask(taskId, { status: colKey })
     } catch (error) {
       toast.error('Failed to move task')
+    } finally {
+      setDraggedOverCol(null)
     }
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-      {COLUMNS.map(({ key, label, color }) => {
+    <div className="flex items-start gap-4 overflow-x-auto pb-4 w-full scrollbar-thin">
+      {COLUMNS.map(({ key, label, color, icon: StatusIcon }) => {
         const tasks = tasksByStatus[key] || []
         const isHovered = draggedOverCol === key
 
@@ -62,20 +65,33 @@ const KanbanBoard = ({ onTaskClick }) => {
             onDragEnter={(e) => handleDragEnter(e, key)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, key)}
-            className={`flex flex-col rounded-xl border min-h-[450px] transition-all duration-200 ${
-              isHovered
-                ? 'bg-dark-850/80 border-primary-500 shadow-xl shadow-primary-900/5 scale-[1.01]'
-                : 'bg-dark-800/50 border-slate-700/50'
+            className={`flex flex-col min-h-[500px] w-[290px] min-w-[290px] flex-shrink-0 transition-all duration-200 rounded-xl ${
+              isHovered ? 'scale-[1.01] shadow-lg shadow-primary-950/20' : ''
             }`}
           >
-            <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-700/50 flex-shrink-0">
-              <span className={`w-2.5 h-2.5 rounded-full ${color}`} />
-              <span className="text-sm font-semibold text-slate-300">{label}</span>
-              <span className="ml-auto bg-dark-700 text-slate-400 text-xs px-2 py-0.5 rounded-full">
+            {/* Status Header */}
+            <div className={`flex items-center justify-between px-3.5 py-2.5 rounded-t-xl text-white font-bold text-xs uppercase tracking-wider flex-shrink-0 shadow-sm ${color}`}>
+              <div className="flex items-center gap-2 min-w-0">
+                <StatusIcon size={14} className="flex-shrink-0" />
+                <span className="truncate">{label}</span>
+              </div>
+              <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-bold flex-shrink-0">
                 {tasks.length}
               </span>
             </div>
-            <div className="flex-1 p-3 space-y-3 overflow-y-auto max-h-[500px]">
+
+            {/* Status Body */}
+            <div className={`flex-1 p-2 space-y-2 overflow-y-auto max-h-[480px] bg-dark-800/25 rounded-b-xl border border-t-0 transition-colors duration-200 ${
+              isHovered ? 'border-primary-500 bg-dark-800/40' : 'border-slate-700/40'
+            }`}>
+              <div className="flex items-center justify-between px-1.5 py-1 text-[10px] text-slate-500 font-semibold uppercase tracking-wider border-b border-slate-800/40 mb-1 flex-shrink-0">
+                <span className="flex items-center gap-1">
+                  <FiList size={11} />
+                  <span>Tasks</span>
+                </span>
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-600/40" />
+              </div>
+
               {tasks.length === 0 ? (
                 <div className="flex items-center justify-center h-24 text-slate-600 text-xs italic">
                   Drop tasks here

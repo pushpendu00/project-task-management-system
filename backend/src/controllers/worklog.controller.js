@@ -46,6 +46,7 @@ const submitWorkLog = async (req, res) => {
         user: manager,
         type: 'reminder',
         message: `${req.user.name} submitted a work log of ${hoursWorked} hours on task "${task.title}".`,
+        relatedLink: `/tasks/${task._id}`,
       });
     }
 
@@ -116,6 +117,7 @@ const replyToWorkLog = async (req, res) => {
         user: workLog.employee._id,
         type: 'log_reply',
         message: `${req.user.name} commented on your work log for "${task.title}".`,
+        relatedLink: `/tasks/${task._id}`,
       });
     } else if (isOwner) {
       // Notify PM of employee reply
@@ -125,6 +127,7 @@ const replyToWorkLog = async (req, res) => {
           user: manager,
           type: 'log_reply',
           message: `${req.user.name} replied to comments on work log for "${task.title}".`,
+          relatedLink: `/tasks/${task._id}`,
         });
       }
     }

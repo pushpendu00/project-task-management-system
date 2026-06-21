@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import {
   AiOutlinePlus, AiOutlineArrowLeft, AiOutlineUser,
@@ -20,6 +20,7 @@ import Spinner from '../../components/common/Spinner'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 import { formatDate } from '../../utils/formatDate'
+import ConfirmModal from '../../components/common/ConfirmModal'
 
 const ProjectDetailPage = () => {
   const { id } = useParams()
@@ -37,6 +38,7 @@ const ProjectDetailPage = () => {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false)
   const [viewMode, setViewMode] = useState('board')
+  const [confirmRemoveMemberId, setConfirmRemoveMemberId] = useState(null)
 
   // Add Member state
   const [allUsers, setAllUsers] = useState([])
@@ -83,9 +85,14 @@ const ProjectDetailPage = () => {
     setSearchQuery('')
   }
 
-  const handleRemoveMember = async (userId) => {
-    if (window.confirm('Remove this member from the project?')) {
-      await removeMember(id, userId)
+  const handleRemoveMemberClick = (userId) => {
+    setConfirmRemoveMemberId(userId)
+  }
+
+  const handleConfirmRemoveMember = async () => {
+    if (confirmRemoveMemberId) {
+      await removeMember(id, confirmRemoveMemberId)
+      setConfirmRemoveMemberId(null)
     }
   }
 
@@ -128,83 +135,98 @@ const ProjectDetailPage = () => {
 
   return (
     <div className="animate-fade-in flex flex-col min-h-0">
-      {/* Header */}
-      <div className="mb-6 flex-shrink-0">
-        <button
-          onClick={() => navigate('/projects')}
-          className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white mb-3 transition-colors"
-          id="back-to-projects-btn"
-        >
-          <AiOutlineArrowLeft size={16} /> Back to Projects
-        </button>
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-          <div>
-            <h1 className="page-title text-3xl font-extrabold tracking-tight text-white mb-1">
-              {project.name}
-            </h1>
-            {project.description && (
-              <p className="text-slate-400 text-sm max-w-2xl">{project.description}</p>
-            )}
-            <div className="flex gap-2 mt-3">
-              <Badge type="status" value={project.status} />
-              <Badge type="priority" value={project.priority} />
+      {/* Compact Header */}
+      <div className="mb-4 flex-shrink-0 bg-dark-800/40 border border-slate-700/40 rounded-xl p-3 shadow-md">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* Left: Navigation, Title & Details */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1 text-[11px] text-slate-500 mb-0.5">
+                <Link to="/projects" className="hover:text-primary-400 transition-colors font-semibold">
+                  Projects
+                </Link>
+                <span>/</span>
+                <span className="truncate max-w-[120px] text-slate-400 font-medium">{project.name}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-lg font-bold text-white tracking-tight truncate">
+                  {project.name}
+                </h1>
+                <Badge type="status" value={project.status} className="text-[10px] px-2 py-0.5" />
+                <Badge type="priority" value={project.priority} className="text-[10px] px-2 py-0.5" />
+              </div>
+              {project.description && (
+                <p className="text-slate-400 text-xs truncate max-w-xl mt-0.5">
+                  {project.description}
+                </p>
+              )}
             </div>
           </div>
-          <div className="flex gap-3">
-            {canEditProject && (
-              <Button
-                variant="secondary"
-                onClick={() => setIsEditProjectOpen(true)}
-                id="edit-project-btn"
+          
+          {/* Right: Toggle & Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex bg-dark-900 border border-slate-700/50 rounded-lg p-0.5">
+              <button
+                onClick={() => setViewMode('board')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${viewMode === 'board' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                type="button"
               >
-                <AiOutlineEdit size={18} /> Edit Project
-              </Button>
-            )}
-            {canManageMembers && (
-              <Button
-                variant="secondary"
-                onClick={() => setIsAddMemberOpen(true)}
-                id="add-member-btn"
+                <AiOutlineAppstore size={14} /> Board
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${viewMode === 'list' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                type="button"
               >
-                <AiOutlineUserAdd size={18} /> Manage Team
-              </Button>
-            )}
-            {canCreateTask && (
-              <Button
-                variant="primary"
-                onClick={() => setIsTaskModalOpen(true)}
-                id="create-task-btn"
-              >
-                <AiOutlinePlus size={18} /> Add Task
-              </Button>
-            )}
+                <AiOutlineUnorderedList size={14} /> List
+              </button>
+            </div>
+            
+            <div className="hidden sm:block h-4 w-px bg-slate-700/60" />
+            
+            <div className="flex gap-2">
+              {canEditProject && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setIsEditProjectOpen(true)}
+                  className="text-xs px-2.5 py-1.5 flex items-center gap-1"
+                  id="edit-project-btn"
+                >
+                  <AiOutlineEdit size={14} /> Settings
+                </Button>
+              )}
+              {canManageMembers && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setIsAddMemberOpen(true)}
+                  className="text-xs px-2.5 py-1.5 flex items-center gap-1"
+                  id="add-member-btn"
+                >
+                  <AiOutlineUserAdd size={14} /> Team
+                </Button>
+              )}
+              {canCreateTask && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setIsTaskModalOpen(true)}
+                  className="text-xs px-2.5 py-1.5 flex items-center gap-1"
+                  id="create-task-btn"
+                >
+                  <AiOutlinePlus size={14} /> Add Task
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start flex-1 min-h-0">
-        {/* Kanban Board / List View (Spans 3 cols) */}
-        <div className="lg:col-span-3 min-h-0 space-y-4">
-          <div className="flex justify-end">
-            <div className="flex bg-dark-800 border border-slate-700/50 rounded-lg p-0.5">
-              <button
-                onClick={() => setViewMode('board')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${viewMode === 'board' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                type="button"
-              >
-                <AiOutlineAppstore size={14} /> Board View
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${viewMode === 'list' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                type="button"
-              >
-                <AiOutlineUnorderedList size={14} /> List View
-              </button>
-            </div>
-          </div>
-
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start flex-1 min-h-0">
+        {/* Kanban Board / List View (Spans 4 cols) */}
+        <div className="lg:col-span-4 min-h-0">
           {taskLoading ? (
             <div className="flex justify-center py-24"><Spinner size="lg" /></div>
           ) : viewMode === 'board' ? (
@@ -265,49 +287,49 @@ const ProjectDetailPage = () => {
         </div>
 
         {/* Sidebar Project Info (Spans 1 col) */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-4">
           {/* Project Details Panel */}
-          <div className="card p-5 space-y-5">
-            <h3 className="text-sm font-bold text-white border-b border-slate-700/50 pb-2 uppercase tracking-wider">
+          <div className="card p-3.5 space-y-3.5 shadow-md">
+            <h3 className="text-xs font-bold text-white border-b border-slate-700/50 pb-1.5 uppercase tracking-wider">
               Project Settings
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <span className="block text-xs text-slate-500 font-semibold uppercase">Project Owner</span>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-6 h-6 rounded-full bg-primary-600 text-white font-bold text-xs flex items-center justify-center">
+                <span className="block text-[10px] text-slate-500 font-semibold uppercase">Project Owner</span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-primary-600 text-white font-bold text-[10px] flex items-center justify-center flex-shrink-0">
                     {project.owner?.name?.[0]?.toUpperCase()}
                   </div>
-                  <span className="text-sm text-slate-200">{project.owner?.name}</span>
+                  <span className="text-xs text-slate-200 truncate">{project.owner?.name}</span>
                 </div>
               </div>
 
               <div>
-                <span className="block text-xs text-slate-500 font-semibold uppercase">Project Manager</span>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-6 h-6 rounded-full bg-purple-600 text-white font-bold text-xs flex items-center justify-center">
+                <span className="block text-[10px] text-slate-500 font-semibold uppercase">Project Manager</span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-purple-600 text-white font-bold text-[10px] flex items-center justify-center flex-shrink-0">
                     {project.assignedManager?.name?.[0]?.toUpperCase() || 'U'}
                   </div>
-                  <span className="text-sm text-slate-200">{project.assignedManager?.name || 'Unassigned'}</span>
+                  <span className="text-xs text-slate-200 truncate">{project.assignedManager?.name || 'Unassigned'}</span>
                 </div>
               </div>
 
               <div>
-                <span className="block text-xs text-slate-500 font-semibold uppercase">Dates</span>
-                <p className="text-sm text-slate-300 mt-1">
+                <span className="block text-[10px] text-slate-500 font-semibold uppercase">Dates</span>
+                <p className="text-xs text-slate-300 mt-0.5 font-medium">
                   {project.startDate ? formatDate(project.startDate) : 'N/A'} —{' '}
                   {project.endDate ? formatDate(project.endDate) : 'N/A'}
                 </p>
               </div>
 
               <div>
-                <span className="block text-xs text-slate-500 font-semibold uppercase mb-1.5">Project Progress</span>
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center text-xs font-semibold">
-                    <span className="text-slate-400">Completion Percentage</span>
+                <span className="block text-[10px] text-slate-500 font-semibold uppercase mb-1">Project Progress</span>
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center text-[10px] font-semibold">
+                    <span className="text-slate-400">Completion</span>
                     <span className="text-primary-400 font-bold">{project.progress || 0}%</span>
                   </div>
-                  <div className="w-full h-2 bg-dark-900 rounded-full overflow-hidden border border-slate-800">
+                  <div className="w-full h-1.5 bg-dark-900 rounded-full overflow-hidden border border-slate-800">
                     <div
                       className="h-full bg-primary-500 rounded-full transition-all duration-500"
                       style={{ width: `${project.progress || 0}%` }}
@@ -318,10 +340,10 @@ const ProjectDetailPage = () => {
 
               {project.tags && project.tags.length > 0 && (
                 <div>
-                  <span className="block text-xs text-slate-500 font-semibold uppercase mb-1">Tags</span>
+                  <span className="block text-[10px] text-slate-500 font-semibold uppercase mb-1">Tags</span>
                   <div className="flex flex-wrap gap-1">
                     {project.tags.map((tag) => (
-                      <span key={tag} className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700/30">
+                      <span key={tag} className="px-1.5 py-0.5 rounded text-[9px] bg-slate-850 text-slate-400 border border-slate-700/30">
                         {tag}
                       </span>
                     ))}
@@ -332,32 +354,32 @@ const ProjectDetailPage = () => {
           </div>
 
           {/* Project Team Members Panel */}
-          <div className="card p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-700/50 pb-2">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+          <div className="card p-3.5 space-y-3.5 shadow-md">
+            <div className="flex items-center justify-between border-b border-slate-700/50 pb-1.5">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider">
                 Team Members ({project.members?.length || 0})
               </h3>
             </div>
-            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
               {project.members && project.members.length > 0 ? (
                 project.members.map((member) => (
-                  <div key={member.user?._id} className="flex items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-dark-800/40 transition-colors">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-full bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                  <div key={member.user?._id} className="flex items-center justify-between gap-1.5 p-1 rounded-lg hover:bg-dark-800/40 transition-colors">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 font-bold text-[10px] flex items-center justify-center flex-shrink-0">
                         {member.user?.name?.[0]?.toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-slate-200 truncate">{member.user?.name}</p>
-                        <p className="text-[10px] text-slate-500 capitalize">{member.role}</p>
+                        <p className="text-xs font-semibold text-slate-200 truncate leading-tight">{member.user?.name}</p>
+                        <p className="text-[9px] text-slate-500 capitalize leading-none">{member.role}</p>
                       </div>
                     </div>
                     {canManageMembers && (
                       <button
-                        onClick={() => handleRemoveMember(member.user?._id)}
-                        className="text-slate-500 hover:text-red-400 p-1 transition-colors"
+                        onClick={() => handleRemoveMemberClick(member.user?._id)}
+                        className="text-slate-500 hover:text-red-400 p-0.5 transition-colors flex-shrink-0"
                         title="Remove member"
                       >
-                        <AiOutlineCloseCircle size={16} />
+                        <AiOutlineCloseCircle size={14} />
                       </button>
                     )}
                   </div>
@@ -490,7 +512,7 @@ const ProjectDetailPage = () => {
                   {canManageMembers && (
                     <button
                       type="button"
-                      onClick={() => handleRemoveMember(member.user?._id || member.user)}
+                      onClick={() => handleRemoveMemberClick(member.user?._id || member.user)}
                       className="text-slate-500 hover:text-red-400 p-1 transition-colors"
                       title="Remove member"
                     >
@@ -515,6 +537,17 @@ const ProjectDetailPage = () => {
           onCancel={() => setIsEditProjectOpen(false)}
         />
       </Modal>
+
+      <ConfirmModal
+        isOpen={!!confirmRemoveMemberId}
+        onClose={() => setConfirmRemoveMemberId(null)}
+        onConfirm={handleConfirmRemoveMember}
+        title="Remove Member"
+        message="Are you sure you want to remove this member from the project? They will lose access to all tasks and discussion boards in this project."
+        confirmText="Remove Member"
+        type="danger"
+        loading={projLoading}
+      />
     </div>
   )
 }

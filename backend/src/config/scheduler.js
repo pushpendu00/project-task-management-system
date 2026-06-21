@@ -46,6 +46,7 @@ const runDeadlineChecks = async () => {
               user: employee._id,
               type: 'overdue',
               message: `Task Overdue Alert: The deadline for "${task.title}" has passed (${dueDateStr}).`,
+              relatedLink: `/tasks/${task._id}`,
             });
 
             await sendEmail({
@@ -69,6 +70,7 @@ const runDeadlineChecks = async () => {
               user: manager._id,
               type: 'overdue',
               message: `Overdue Task Alert: "${task.title}" assigned to ${employee ? employee.name : 'Unassigned'} has passed its deadline.`,
+              relatedLink: `/tasks/${task._id}`,
             });
 
             await sendEmail({
@@ -119,6 +121,7 @@ const runDeadlineChecks = async () => {
               user: employee._id,
               type: 'reminder',
               message: `Deadline Reminder: Task "${task.title}" is due in less than ${label}.`,
+              relatedLink: `/tasks/${task._id}`,
             });
 
             await sendEmail({
@@ -142,6 +145,7 @@ const runDeadlineChecks = async () => {
               user: manager._id,
               type: 'reminder',
               message: `Upcoming Deadline: Task "${task.title}" assigned to ${employee ? employee.name : 'Unassigned'} is due in less than ${label}.`,
+              relatedLink: `/tasks/${task._id}`,
             });
 
             await sendEmail({

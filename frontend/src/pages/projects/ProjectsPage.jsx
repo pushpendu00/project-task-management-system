@@ -12,6 +12,7 @@ import Button  from '../../components/common/Button'
 import Spinner from '../../components/common/Spinner'
 import Badge   from '../../components/common/Badge'
 import { formatDate } from '../../utils/formatDate'
+import ConfirmModal from '../../components/common/ConfirmModal'
 
 const ProjectsPage = () => {
   const projects = useRecoilValue(projectsAtom)
@@ -23,6 +24,7 @@ const ProjectsPage = () => {
   const [viewMode,       setViewMode]       = useState(() => {
     return localStorage.getItem('projectsViewMode') || 'grid'
   })
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
 
   useEffect(() => { fetchProjects() }, []) // eslint-disable-line
 
@@ -40,8 +42,15 @@ const ProjectsPage = () => {
 
   const handleEdit = (project) => { setEditingProject(project); setIsModalOpen(true) }
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Delete this project?')) await deleteProject(id)
+  const handleDeleteClick = (id) => {
+    setConfirmDeleteId(id)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (confirmDeleteId) {
+      await deleteProject(confirmDeleteId)
+      setConfirmDeleteId(null)
+    }
   }
 
   const filtered = projects.filter((p) =>
@@ -161,7 +170,7 @@ const ProjectsPage = () => {
                         )}
                         {user?.role === 'admin' && (
                           <button
-                            onClick={() => handleDelete(project._id)}
+                            onClick={() => handleDeleteClick(project._id)}
                             className="px-2.5 py-1.5 rounded-lg bg-dark-700 hover:bg-red-950/40 text-slate-400 hover:text-red-400 border border-transparent hover:border-red-900/30 transition-colors"
                           >
                             Delete
@@ -186,7 +195,7 @@ const ProjectsPage = () => {
                 key={project._id}
                 project={project}
                 onEdit={canEdit ? handleEdit : undefined}
-                onDelete={user?.role === 'admin' ? handleDelete : undefined}
+                onDelete={user?.role === 'admin' ? handleDeleteClick : undefined}
               />
             )
           })}
@@ -198,6 +207,17 @@ const ProjectsPage = () => {
         <ProjectForm initialData={editingProject || {}} onSubmit={handleSubmit}
                      loading={loading} onCancel={() => { setIsModalOpen(false); setEditingProject(null) }} />
       </Modal>
+
+      <ConfirmModal
+        isOpen={!!confirmDeleteId}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Project"
+        message="Are you sure you want to delete this project? All associated tasks, milestones, and discussions will be permanently deleted."
+        confirmText="Delete Project"
+        type="danger"
+        loading={loading}
+      />
     </div>
   )
 }
