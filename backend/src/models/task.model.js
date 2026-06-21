@@ -15,7 +15,7 @@ const taskSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['todo', 'in-progress', 'in-review', 'done'],
+      enum: ['todo', 'in-progress', 'in-review', 'completed', 'blocked'],
       default: 'todo',
     },
     priority: {
@@ -57,6 +57,19 @@ const taskSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    sentReminders: {
+      type: [String],
+      default: [],
+    },
+    history: [
+      {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        action: { type: String },
+        previousValue: { type: String, default: '' },
+        newValue: { type: String, default: '' },
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
   },
   {
     timestamps: true,

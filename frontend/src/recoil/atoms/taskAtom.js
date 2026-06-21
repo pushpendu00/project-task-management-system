@@ -21,5 +21,6 @@ export const taskFilterAtom = atom({
     status: '',
     priority: '',
     assignedTo: '',
+    project: '',
   },
 })

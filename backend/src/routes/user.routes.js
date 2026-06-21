@@ -2,6 +2,7 @@ const express = require('express');
 const {
   getAllUsers,
   getUserById,
+  createUser,
   updateUser,
   deleteUser,
 } = require('../controllers/user.controller');
@@ -11,7 +12,10 @@ const router = express.Router();
 
 router.use(protect); // All user routes require authentication
 
-router.get('/', getAllUsers);
+router.route('/')
+  .get(getAllUsers)
+  .post(authorize('admin'), createUser);
+
 router.get('/:id', getUserById);
 router.put('/:id', updateUser);
 router.delete('/:id', authorize('admin'), deleteUser);

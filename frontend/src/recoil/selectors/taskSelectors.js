@@ -10,6 +10,7 @@ export const filteredTasksSelector = selector({
       if (filter.status     && task.status     !== filter.status)          return false
       if (filter.priority   && task.priority   !== filter.priority)        return false
       if (filter.assignedTo && task.assignedTo?._id !== filter.assignedTo) return false
+      if (filter.project    && task.project?._id    !== filter.project && task.project !== filter.project) return false
       return true
     })
   },
@@ -23,7 +24,8 @@ export const tasksByStatusSelector = selector({
       'todo':        tasks.filter((t) => t.status === 'todo'),
       'in-progress': tasks.filter((t) => t.status === 'in-progress'),
       'in-review':   tasks.filter((t) => t.status === 'in-review'),
-      'done':        tasks.filter((t) => t.status === 'done'),
+      'completed':   tasks.filter((t) => t.status === 'completed'),
+      'blocked':     tasks.filter((t) => t.status === 'blocked'),
     }
   },
 })

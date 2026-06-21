@@ -4,10 +4,11 @@ import { tasksByStatusSelector } from '../../recoil/selectors/taskSelectors'
 import TaskCard from './TaskCard'
 
 const COLUMNS = [
-  { key: 'todo',        label: 'To Do',      color: 'bg-slate-500'  },
-  { key: 'in-progress', label: 'In Progress', color: 'bg-blue-500'   },
-  { key: 'in-review',   label: 'In Review',   color: 'bg-yellow-500' },
-  { key: 'done',        label: 'Done',        color: 'bg-green-500'  },
+  { key: 'todo',        label: 'To Do',       color: 'bg-slate-500'  },
+  { key: 'in-progress', label: 'In Progress',  color: 'bg-blue-500'   },
+  { key: 'in-review',   label: 'In Review',    color: 'bg-yellow-500' },
+  { key: 'completed',   label: 'Completed',    color: 'bg-green-500'  },
+  { key: 'blocked',     label: 'Blocked',      color: 'bg-red-500'    },
 ]
 
 const KanbanBoard = ({ onTaskClick }) => {

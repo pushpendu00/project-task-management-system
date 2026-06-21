@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import {
   AiOutlinePlus, AiOutlineArrowLeft, AiOutlineUser,
-  AiOutlineUserAdd, AiOutlineCloseCircle, AiOutlineSearch
+  AiOutlineUserAdd, AiOutlineCloseCircle, AiOutlineSearch,
+  AiOutlineEdit
 } from 'react-icons/ai'
 import { selectedProjectAtom } from '../../recoil/atoms/projectAtom'
 import useProjects from '../../hooks/useProjects'
@@ -11,6 +12,7 @@ import useTasks from '../../hooks/useTasks'
 import useAuth from '../../hooks/useAuth'
 import KanbanBoard from '../../components/task/KanbanBoard'
 import TaskForm from '../../components/task/TaskForm'
+import ProjectForm from '../../components/project/ProjectForm'
 import TaskDetailModal from '../../components/task/TaskDetailModal'
 import Modal from '../../components/common/Modal'
 import Button from '../../components/common/Button'
@@ -18,17 +20,19 @@ import Badge from '../../components/common/Badge'
 import Spinner from '../../components/common/Spinner'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
+import { formatDate } from '../../utils/formatDate'
 
 const ProjectDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const project = useRecoilValue(selectedProjectAtom)
   const { user } = useAuth()
-  const { fetchProjectById, addMember, removeMember, loading: projLoading } = useProjects()
+  const { fetchProjectById, updateProject, addMember, removeMember, loading: projLoading } = useProjects()
   const { fetchTasks, createTask, loading: taskLoading, selectedTask, setSelectedTask } = useTasks()
 
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
+  const [isEditProjectOpen, setIsEditProjectOpen] = useState(false)
 
   // Add Member state
   const [allUsers, setAllUsers] = useState([])
@@ -70,7 +74,6 @@ const ProjectDetailPage = () => {
       return
     }
     await addMember(id, { userId: selectedUser._id, role: memberRole })
-    setIsAddMemberOpen(false)
     setSelectedUser(null)
     setMemberRole('developer')
     setSearchQuery('')
@@ -88,16 +91,30 @@ const ProjectDetailPage = () => {
   if (!project) return null
 
   // User permission check
-  const isOwnerOrAdmin = user?._id === project.owner?._id || user?.role === 'admin'
-  const isManager = project.members?.some((m) => m.user?._id === user?._id && m.role === 'manager')
-  const canManageMembers = isOwnerOrAdmin || isManager
+  const isOwner = project.owner?._id === user?._id || project.owner === user?._id;
+  const isAssignedPM = project.assignedManager?._id === user?._id || project.assignedManager === user?._id;
+  const isTeamManager = project.members?.some((m) => (m.user?._id || m.user) === user?._id && m.role === 'manager');
+  
+  const isOwnerOrAdmin = user?.role === 'admin' || isOwner;
+  const canManageMembers = isOwnerOrAdmin || isAssignedPM || isTeamManager;
+  const canCreateTask = user?.role === 'admin' || isOwner || isAssignedPM || isTeamManager;
+  const canEditProject = user?.role === 'admin' || isOwner || isAssignedPM;
+
+  const handleEditProjectSubmit = async (data) => {
+    await updateProject(id, data)
+    setIsEditProjectOpen(false)
+  }
 
   // Filter out existing members
-  const availableUsers = allUsers.filter(
-    (u) =>
-      u._id !== project.owner?._id &&
-      !project.members?.some((m) => m.user?._id === u._id)
-  )
+  const availableUsers = allUsers.filter((u) => {
+    const ownerId = (project.owner?._id || project.owner || '').toString()
+    if (u._id.toString() === ownerId) return false
+
+    return !project.members?.some((m) => {
+      const memberId = (m.user?._id || m.user || '').toString()
+      return memberId === u._id.toString()
+    })
+  })
 
   const searchedUsers = availableUsers.filter(
     (u) =>
@@ -130,6 +147,15 @@ const ProjectDetailPage = () => {
             </div>
           </div>
           <div className="flex gap-3">
+            {canEditProject && (
+              <Button
+                variant="secondary"
+                onClick={() => setIsEditProjectOpen(true)}
+                id="edit-project-btn"
+              >
+                <AiOutlineEdit size={18} /> Edit Project
+              </Button>
+            )}
             {canManageMembers && (
               <Button
                 variant="secondary"
@@ -139,13 +165,15 @@ const ProjectDetailPage = () => {
                 <AiOutlineUserAdd size={18} /> Manage Team
               </Button>
             )}
-            <Button
-              variant="primary"
-              onClick={() => setIsTaskModalOpen(true)}
-              id="create-task-btn"
-            >
-              <AiOutlinePlus size={18} /> Add Task
-            </Button>
+            {canCreateTask && (
+              <Button
+                variant="primary"
+                onClick={() => setIsTaskModalOpen(true)}
+                id="create-task-btn"
+              >
+                <AiOutlinePlus size={18} /> Add Task
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -176,6 +204,16 @@ const ProjectDetailPage = () => {
                     {project.owner?.name?.[0]?.toUpperCase()}
                   </div>
                   <span className="text-sm text-slate-200">{project.owner?.name}</span>
+                </div>
+              </div>
+
+              <div>
+                <span className="block text-xs text-slate-500 font-semibold uppercase">Project Manager</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-6 h-6 rounded-full bg-purple-600 text-white font-bold text-xs flex items-center justify-center">
+                    {project.assignedManager?.name?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                  <span className="text-sm text-slate-200">{project.assignedManager?.name || 'Unassigned'}</span>
                 </div>
               </div>
 
@@ -274,9 +312,16 @@ const ProjectDetailPage = () => {
               />
             </div>
 
+            {selectedUser && (
+              <div className="mt-2 p-2 bg-primary-950/30 border border-primary-800/40 rounded-lg flex items-center justify-between text-xs text-slate-200 animate-fade-in">
+                <span>Selected User: <strong className="text-white">{selectedUser.name}</strong> ({selectedUser.email})</span>
+                <button type="button" onClick={() => { setSelectedUser(null); setSearchQuery('') }} className="text-slate-400 hover:text-red-400 font-bold px-1.5 transition-colors">✕</button>
+              </div>
+            )}
+
             {/* User Search Results dropdown */}
-            {searchQuery && (
-              <div className="mt-1 border border-slate-700 bg-dark-800 rounded-lg max-h-40 overflow-y-auto divide-y divide-slate-700/50">
+            {!selectedUser && (
+              <div className="mt-2 border border-slate-700 bg-dark-800 rounded-lg max-h-40 overflow-y-auto divide-y divide-slate-700/50">
                 {memberLoading ? (
                   <div className="p-3 text-xs text-slate-500 flex justify-center"><Spinner size="sm" /></div>
                 ) : searchedUsers.length === 0 ? (
@@ -287,17 +332,14 @@ const ProjectDetailPage = () => {
                       key={u._id}
                       onClick={() => {
                         setSelectedUser(u)
-                        setSearchQuery(`${u.name} (${u.email})`)
+                        setSearchQuery('')
                       }}
-                      className="p-2.5 text-xs text-slate-300 hover:bg-dark-900 cursor-pointer flex items-center gap-2 justify-between"
+                      className="p-2.5 text-xs text-slate-300 hover:bg-dark-900 cursor-pointer flex items-center gap-2 justify-between transition-colors"
                     >
                       <div>
                         <span className="font-semibold text-white">{u.name}</span>
                         <span className="text-slate-500 ml-2">({u.email})</span>
                       </div>
-                      {selectedUser?._id === u._id && (
-                        <span className="text-primary-400 font-bold">Selected</span>
-                      )}
                     </div>
                   ))
                 )}
@@ -317,6 +359,8 @@ const ProjectDetailPage = () => {
               <option value="designer">Designer</option>
               <option value="tester">Tester</option>
               <option value="viewer">Viewer</option>
+              <option value="member">Member</option>
+              <option value="employee">Employee</option>
             </select>
           </div>
 
@@ -329,13 +373,59 @@ const ProjectDetailPage = () => {
                 setSelectedUser(null)
               }}
             >
-              Cancel
+              Done / Close
             </Button>
             <Button type="submit" variant="primary" loading={projLoading}>
               Add to Team
             </Button>
           </div>
         </form>
+
+        {/* Current Team Members List */}
+        <div className="border-t border-slate-700/50 pt-4 mt-4">
+          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+            Current Team Members ({project.members?.length || 0})
+          </h4>
+          <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+            {project.members && project.members.length > 0 ? (
+              project.members.map((member) => (
+                <div key={member.user?._id || member.user} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-dark-900 border border-slate-800 text-left">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 font-bold text-[10px] flex items-center justify-center flex-shrink-0">
+                      {member.user?.name?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-slate-200 truncate">{member.user?.name || 'Unknown'}</p>
+                      <p className="text-[10px] text-slate-500 capitalize">{member.role}</p>
+                    </div>
+                  </div>
+                  {canManageMembers && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveMember(member.user?._id || member.user)}
+                      className="text-slate-500 hover:text-red-400 p-1 transition-colors"
+                      title="Remove member"
+                    >
+                      <AiOutlineCloseCircle size={16} />
+                    </button>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-slate-500 italic">No members assigned yet.</p>
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Project Modal */}
+      <Modal isOpen={isEditProjectOpen} onClose={() => setIsEditProjectOpen(false)} title="Edit Project">
+        <ProjectForm
+          initialData={project}
+          onSubmit={handleEditProjectSubmit}
+          loading={projLoading}
+          onCancel={() => setIsEditProjectOpen(false)}
+        />
       </Modal>
     </div>
   )

@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Input from '../common/Input'
 import Button from '../common/Button'
+import api from '../../api/axios'
 
-const STATUS_OPTIONS   = ['todo', 'in-progress', 'in-review', 'done']
+const STATUS_OPTIONS   = ['todo', 'in-progress', 'in-review', 'completed', 'blocked']
 const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'critical']
 
 const TaskForm = ({ initialData = {}, projectId, members = [], onSubmit, loading = false, onCancel }) => {
@@ -17,6 +18,37 @@ const TaskForm = ({ initialData = {}, projectId, members = [], onSubmit, loading
     project:        initialData.project?._id       || projectId || '',
   })
   const [errors, setErrors] = useState({})
+  const [projects, setProjects] = useState([])
+  const [projectMembers, setProjectMembers] = useState(members)
+  const [loadingMembers, setLoadingMembers] = useState(false)
+
+  useEffect(() => {
+    if (!projectId && !initialData.project) {
+      api.get('/projects')
+        .then(({ data }) => setProjects(data.projects || []))
+        .catch(() => {})
+    }
+  }, [projectId, initialData.project])
+
+  useEffect(() => {
+    if (members && members.length > 0) {
+      setProjectMembers(members)
+    } else if (form.project) {
+      setLoadingMembers(true)
+      api.get(`/projects/${form.project}`)
+        .then(({ data }) => {
+          setProjectMembers(data.project?.members || [])
+        })
+        .catch(() => {
+          setProjectMembers([])
+        })
+        .finally(() => {
+          setLoadingMembers(false)
+        })
+    } else {
+      setProjectMembers([])
+    }
+  }, [form.project, members])
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -26,6 +58,7 @@ const TaskForm = ({ initialData = {}, projectId, members = [], onSubmit, loading
   const validate = () => {
     const newErrors = {}
     if (!form.title.trim()) newErrors.title = 'Task title is required'
+    if (!form.project) newErrors.project = 'Project is required'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -41,6 +74,16 @@ const TaskForm = ({ initialData = {}, projectId, members = [], onSubmit, loading
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" id="task-form">
+      {!projectId && !initialData._id && (
+        <div>
+          <label className="label">Project *</label>
+          <select name="project" value={form.project} onChange={handleChange} className="input" id="task-project-select" required>
+            <option value="">Select Project</option>
+            {projects.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
+          </select>
+          {errors.project && <p className="text-red-500 text-xs mt-1">{errors.project}</p>}
+        </div>
+      )}
       <Input id="task-title" label="Task Title *" name="title"
              value={form.title} onChange={handleChange} placeholder="e.g. Implement login page" error={errors.title} />
       <div>
@@ -64,11 +107,11 @@ const TaskForm = ({ initialData = {}, projectId, members = [], onSubmit, loading
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="label">Assign To</label>
+          <label className="label">Assign To {loadingMembers && <span className="text-xs text-slate-500 font-normal">(loading...)</span>}</label>
           <select name="assignedTo" value={form.assignedTo} onChange={handleChange} className="input" id="task-assigned-to">
             <option value="">Unassigned</option>
-            {members.map((m) => (
-              <option key={m.user._id} value={m.user._id}>{m.user.name}</option>
+            {projectMembers.map((m) => (
+              <option key={m.user?._id || m.user} value={m.user?._id || m.user}>{m.user?.name || 'Unknown'}</option>
             ))}
           </select>
         </div>

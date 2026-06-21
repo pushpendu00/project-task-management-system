@@ -15,7 +15,7 @@ const projectSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['planning', 'active', 'on-hold', 'completed', 'cancelled'],
+      enum: ['planning', 'active', 'on-hold', 'completed', 'cancelled', 'archived'],
       default: 'planning',
     },
     priority: {
@@ -28,6 +28,11 @@ const projectSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    assignedManager: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
     members: [
       {
         user: {
@@ -36,7 +41,7 @@ const projectSchema = new mongoose.Schema(
         },
         role: {
           type: String,
-          enum: ['manager', 'developer', 'designer', 'tester', 'viewer'],
+          enum: ['manager', 'developer', 'designer', 'tester', 'viewer', 'member', 'employee'],
           default: 'developer',
         },
       },

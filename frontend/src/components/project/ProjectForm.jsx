@@ -1,21 +1,32 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Input from '../common/Input'
 import Button from '../common/Button'
+import api from '../../api/axios'
 
-const STATUS_OPTIONS   = ['planning', 'active', 'on-hold', 'completed', 'cancelled']
+const STATUS_OPTIONS   = ['planning', 'active', 'on-hold', 'completed', 'cancelled', 'archived']
 const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'critical']
 
 const ProjectForm = ({ initialData = {}, onSubmit, loading = false, onCancel }) => {
   const [form, setForm] = useState({
-    name:        initialData.name        || '',
-    description: initialData.description || '',
-    status:      initialData.status      || 'planning',
-    priority:    initialData.priority    || 'medium',
-    startDate:   initialData.startDate   ? initialData.startDate.slice(0, 10) : '',
-    endDate:     initialData.endDate     ? initialData.endDate.slice(0, 10)   : '',
-    tags:        initialData.tags?.join(', ') || '',
+    name:            initialData.name            || '',
+    description:     initialData.description     || '',
+    status:          initialData.status          || 'planning',
+    priority:        initialData.priority        || 'medium',
+    startDate:       initialData.startDate       ? initialData.startDate.slice(0, 10) : '',
+    endDate:         initialData.endDate         ? initialData.endDate.slice(0, 10)   : '',
+    tags:            initialData.tags?.join(', ') || '',
+    assignedManager: initialData.assignedManager?._id || initialData.assignedManager || '',
   })
+  const [managers, setManagers] = useState([])
   const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    api.get('/users')
+      .then(({ data }) => {
+        setManagers(data.users?.filter(u => u.role === 'manager' && u.isActive) || [])
+      })
+      .catch(() => {})
+  }, [])
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -32,10 +43,12 @@ const ProjectForm = ({ initialData = {}, onSubmit, loading = false, onCancel }) 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!validate()) return
-    onSubmit({
+    const payload = {
       ...form,
       tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
-    })
+    }
+    if (!payload.assignedManager) delete payload.assignedManager
+    onSubmit(payload)
   }
 
   return (
@@ -48,6 +61,24 @@ const ProjectForm = ({ initialData = {}, onSubmit, loading = false, onCancel }) 
                   placeholder="Describe the project..." rows={3}
                   className="input resize-none" id="project-description" />
       </div>
+      
+      {/* Project Manager Selection */}
+      <div>
+        <label className="label">Assigned Project Manager</label>
+        <select
+          name="assignedManager"
+          value={form.assignedManager}
+          onChange={handleChange}
+          className="input"
+          id="project-manager-select"
+        >
+          <option value="">Unassigned</option>
+          {managers.map((m) => (
+            <option key={m._id} value={m._id}>{m.name} ({m.email})</option>
+          ))}
+        </select>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="label">Status</label>

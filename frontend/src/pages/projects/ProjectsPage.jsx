@@ -3,6 +3,7 @@ import { useRecoilValue } from 'recoil'
 import { AiOutlinePlus, AiOutlineSearch } from 'react-icons/ai'
 import { projectsAtom } from '../../recoil/atoms/projectAtom'
 import useProjects from '../../hooks/useProjects'
+import useAuth     from '../../hooks/useAuth'
 import ProjectCard from '../../components/project/ProjectCard'
 import ProjectForm from '../../components/project/ProjectForm'
 import Modal   from '../../components/common/Modal'
@@ -12,6 +13,7 @@ import Spinner from '../../components/common/Spinner'
 const ProjectsPage = () => {
   const projects = useRecoilValue(projectsAtom)
   const { fetchProjects, createProject, updateProject, deleteProject, loading } = useProjects()
+  const { user } = useAuth()
   const [isModalOpen,    setIsModalOpen]    = useState(false)
   const [editingProject, setEditingProject] = useState(null)
   const [search,         setSearch]         = useState('')
@@ -39,9 +41,11 @@ const ProjectsPage = () => {
     <div className="animate-fade-in">
       <div className="page-header">
         <h1 className="page-title">Projects</h1>
-        <Button variant="primary" onClick={() => { setEditingProject(null); setIsModalOpen(true) }} id="create-project-btn">
-          <AiOutlinePlus size={18} /> New Project
-        </Button>
+        {user?.role === 'admin' && (
+          <Button variant="primary" onClick={() => { setEditingProject(null); setIsModalOpen(true) }} id="create-project-btn">
+            <AiOutlinePlus size={18} /> New Project
+          </Button>
+        )}
       </div>
 
       <div className="relative mb-6 max-w-sm">
@@ -58,9 +62,19 @@ const ProjectsPage = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((project) => (
-            <ProjectCard key={project._id} project={project} onEdit={handleEdit} onDelete={handleDelete} />
-          ))}
+          {filtered.map((project) => {
+            const isOwner = project.owner?._id === user?._id || project.owner === user?._id;
+            const isAssignedPM = project.assignedManager?._id === user?._id || project.assignedManager === user?._id;
+            const canEdit = user?.role === 'admin' || isOwner || isAssignedPM;
+            return (
+              <ProjectCard
+                key={project._id}
+                project={project}
+                onEdit={canEdit ? handleEdit : undefined}
+                onDelete={user?.role === 'admin' ? handleDelete : undefined}
+              />
+            )
+          })}
         </div>
       )}
 

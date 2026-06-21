@@ -3,29 +3,46 @@ import { createPortal } from 'react-dom'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import {
   AiOutlineClose, AiOutlineCalendar, AiOutlineClockCircle,
-  AiOutlineUser, AiOutlineDelete, AiOutlineMessage, AiOutlineEdit
+  AiOutlineUser, AiOutlineDelete, AiOutlineMessage, AiOutlineEdit,
+  AiOutlinePaperClip, AiOutlinePlus, AiOutlineHistory, AiOutlineComment
 } from 'react-icons/ai'
 import { selectedTaskAtom } from '../../recoil/atoms/taskAtom'
 import { selectedProjectAtom } from '../../recoil/atoms/projectAtom'
 import useTasks from '../../hooks/useTasks'
+import useAuth from '../../hooks/useAuth'
 import Badge from '../common/Badge'
 import Spinner from '../common/Spinner'
 import Button from '../common/Button'
+import api from '../../api/axios'
+import toast from 'react-hot-toast'
 import { formatDate, formatRelativeTime } from '../../utils/formatDate'
 
 const TaskDetailModal = ({ isOpen, onClose }) => {
   const [selectedTask, setSelectedTask] = useRecoilState(selectedTaskAtom)
   const selectedProject = useRecoilValue(selectedProjectAtom)
-  const { fetchTaskById, updateTask, deleteTask, addComment, loading } = useTasks()
+  const { fetchTaskById, updateTask, deleteTask, addComment } = useTasks()
+  const { user } = useAuth()
 
+  const [activeTab, setActiveTab] = useState('details') // 'details', 'worklogs', 'history'
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [isEditingDesc, setIsEditingDesc] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
   const [editedDesc, setEditedDesc] = useState('')
+  
+  // Comments
   const [newComment, setNewComment] = useState('')
   const [addingComment, setAddingComment] = useState(false)
 
-  // Fetch full task details (including comments) when modal opens/changes
+  // Work Logs
+  const [workLogs, setWorkLogs] = useState([])
+  const [logsLoading, setLogsLoading] = useState(false)
+  const [logHours, setLogHours] = useState('')
+  const [logDesc, setLogDesc] = useState('')
+  const [logAttach, setLogAttach] = useState('')
+  const [submitLogLoading, setSubmitLogLoading] = useState(false)
+  const [replyInputs, setReplyInputs] = useState({}) // { logId: 'reply text' }
+
+  // Fetch full task details (including comments & history) when modal opens/changes
   useEffect(() => {
     if (isOpen && selectedTask?._id) {
       fetchTaskById(selectedTask._id).then((fullTask) => {
@@ -34,6 +51,7 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
           setEditedDesc(fullTask.description || '')
         }
       })
+      fetchWorkLogs()
     }
   }, [isOpen, selectedTask?._id]) // eslint-disable-line
 
@@ -47,6 +65,19 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
       document.body.style.overflow = ''
     }
   }, [isOpen])
+
+  const fetchWorkLogs = async () => {
+    if (!selectedTask?._id) return
+    try {
+      setLogsLoading(true)
+      const { data } = await api.get(`/worklogs?task=${selectedTask._id}`)
+      setWorkLogs(data.workLogs || [])
+    } catch (error) {
+      console.error('Failed to load work logs', error)
+    } finally {
+      setLogsLoading(false)
+    }
+  }
 
   if (!isOpen || !selectedTask) return null
 
@@ -88,8 +119,62 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
     }
   }
 
-  // Get project members list to select assignees from
+  const handleLogWorkSubmit = async (e) => {
+    e.preventDefault()
+    if (!logHours || !logDesc.trim()) {
+      toast.error('Please enter description and hours worked')
+      return
+    }
+
+    try {
+      setSubmitLogLoading(true)
+      await api.post('/worklogs', {
+        task: selectedTask._id,
+        description: logDesc,
+        hoursWorked: Number(logHours),
+        attachment: logAttach,
+      })
+      toast.success('Work log submitted successfully!')
+      setLogHours('')
+      setLogDesc('')
+      setLogAttach('')
+      fetchWorkLogs()
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to submit work log')
+    } finally {
+      setSubmitLogLoading(false)
+    }
+  }
+
+  const handleReplyChange = (logId, val) => {
+    setReplyInputs(prev => ({ ...prev, [logId]: val }))
+  }
+
+  const handleReplySubmit = async (e, logId) => {
+    e.preventDefault()
+    const text = replyInputs[logId]
+    if (!text || !text.trim()) return
+
+    try {
+      await api.post(`/worklogs/${logId}/replies`, { text })
+      toast.success('Reply submitted!')
+      setReplyInputs(prev => ({ ...prev, [logId]: '' }))
+      fetchWorkLogs()
+    } catch (error) {
+      toast.error('Failed to submit reply')
+    }
+  }
+
   const projectMembers = selectedProject?.members || []
+
+  // Check role and permissions
+  const isAssignee = selectedTask.assignedTo?._id === user?._id
+  const isAdmin = user?.role === 'admin'
+  const isPM = selectedProject?.owner?._id === user?._id ||
+               selectedProject?.assignedManager === user?._id ||
+               selectedProject?.members?.some(m => m.user?._id === user?._id && m.role === 'manager')
+
+  const totalLoggedHours = workLogs.reduce((sum, log) => sum + log.hoursWorked, 0)
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -101,7 +186,7 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-700/50 bg-dark-800 flex-shrink-0">
           <div className="flex-1 mr-4">
-            {isEditingTitle ? (
+            {isEditingTitle && (isAdmin || isPM) ? (
               <input
                 type="text"
                 value={editedTitle}
@@ -113,14 +198,20 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
               />
             ) : (
               <h2
-                className="text-lg font-semibold text-white cursor-pointer hover:text-primary-400 flex items-center gap-2 group"
+                className={`text-lg font-semibold text-white flex items-center gap-2 group ${
+                  isAdmin || isPM ? 'cursor-pointer hover:text-primary-400' : ''
+                }`}
                 onClick={() => {
-                  setEditedTitle(selectedTask.title)
-                  setIsEditingTitle(true)
+                  if (isAdmin || isPM) {
+                    setEditedTitle(selectedTask.title)
+                    setIsEditingTitle(true)
+                  }
                 }}
               >
                 {selectedTask.title}
-                <AiOutlineEdit className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400" size={16} />
+                {(isAdmin || isPM) && (
+                  <AiOutlineEdit className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400" size={16} />
+                )}
               </h2>
             )}
             <p className="text-xs text-slate-500 mt-1">
@@ -136,109 +227,316 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
           </button>
         </div>
 
+        {/* Tab Selection */}
+        <div className="flex bg-dark-800/40 border-b border-slate-700/30 px-5 flex-shrink-0 gap-4">
+          <button
+            onClick={() => setActiveTab('details')}
+            className={`py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+              activeTab === 'details' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Details & Comments
+          </button>
+          <button
+            onClick={() => setActiveTab('worklogs')}
+            className={`py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+              activeTab === 'worklogs' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Work Logs
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+              activeTab === 'history' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            History Timeline
+          </button>
+        </div>
+
         {/* Content Panel */}
         <div className="flex-1 flex flex-col md:flex-row overflow-y-auto min-h-0 bg-dark-900/40">
           {/* Main Body (Left) */}
           <div className="flex-1 p-6 space-y-6 overflow-y-auto border-r border-slate-700/30">
-            {/* Description */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-slate-300">Description</h3>
-                {!isEditingDesc && (
-                  <button
-                    onClick={() => {
-                      setEditedDesc(selectedTask.description || '')
-                      setIsEditingDesc(true)
-                    }}
-                    className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1"
-                  >
-                    Edit
-                  </button>
-                )}
-              </div>
-
-              {isEditingDesc ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={editedDesc}
-                    onChange={(e) => setEditedDesc(e.target.value)}
-                    rows={4}
-                    placeholder="Provide description..."
-                    className="input resize-none"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button variant="secondary" size="sm" onClick={() => setIsEditingDesc(false)}>
-                      Cancel
-                    </Button>
-                    <Button variant="primary" size="sm" onClick={handleDescSubmit}>
-                      Save
-                    </Button>
+            {/* DETAILS & COMMENTS TAB */}
+            {activeTab === 'details' && (
+              <div className="space-y-6 animate-fade-in">
+                {/* Description */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold text-slate-300">Description</h3>
+                    {!isEditingDesc && (isAdmin || isPM) && (
+                      <button
+                        onClick={() => {
+                          setEditedDesc(selectedTask.description || '')
+                          setIsEditingDesc(true)
+                        }}
+                        className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1"
+                      >
+                        Edit
+                      </button>
+                    )}
                   </div>
-                </div>
-              ) : (
-                <div
-                  className={`text-sm text-slate-400 whitespace-pre-wrap p-3 rounded-lg min-h-[80px] bg-dark-900/50 border border-slate-800 ${
-                    !selectedTask.description ? 'italic text-slate-600' : ''
-                  }`}
-                >
-                  {selectedTask.description || 'No description provided.'}
-                </div>
-              )}
-            </div>
 
-            {/* Comments Log */}
-            <div className="border-t border-slate-800 pt-6">
-              <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2 mb-4">
-                <AiOutlineMessage size={16} /> Comments ({selectedTask.comments?.length || 0})
-              </h3>
-
-              <div className="space-y-4 mb-4">
-                {selectedTask.comments && selectedTask.comments.length > 0 ? (
-                  selectedTask.comments.map((comment) => (
-                    <div key={comment._id} className="flex gap-3 text-sm">
-                      <div className="w-8 h-8 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                        {comment.user?.name?.[0]?.toUpperCase() || 'U'}
-                      </div>
-                      <div className="flex-1 bg-dark-800/80 p-3 rounded-xl border border-slate-700/30">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-semibold text-white text-xs">{comment.user?.name}</span>
-                          <span className="text-[10px] text-slate-500">{formatRelativeTime(comment.createdAt)}</span>
-                        </div>
-                        <p className="text-slate-300 text-sm whitespace-pre-wrap">{comment.text}</p>
+                  {isEditingDesc ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={editedDesc}
+                        onChange={(e) => setEditedDesc(e.target.value)}
+                        rows={4}
+                        placeholder="Provide description..."
+                        className="input resize-none"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button variant="secondary" size="sm" onClick={() => setIsEditingDesc(false)}>
+                          Cancel
+                        </Button>
+                        <Button variant="primary" size="sm" onClick={handleDescSubmit}>
+                          Save
+                        </Button>
                       </div>
                     </div>
-                  ))
+                  ) : (
+                    <div
+                      className={`text-sm text-slate-400 whitespace-pre-wrap p-3 rounded-lg min-h-[80px] bg-dark-900/50 border border-slate-800 ${
+                        !selectedTask.description ? 'italic text-slate-600' : ''
+                      }`}
+                    >
+                      {selectedTask.description || 'No description provided.'}
+                    </div>
+                  )}
+                </div>
+
+                {/* Comments Log */}
+                <div className="border-t border-slate-800 pt-6">
+                  <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2 mb-4">
+                    <AiOutlineMessage size={16} /> Comments ({selectedTask.comments?.length || 0})
+                  </h3>
+
+                  <div className="space-y-4 mb-4">
+                    {selectedTask.comments && selectedTask.comments.length > 0 ? (
+                      selectedTask.comments.map((comment) => (
+                        <div key={comment._id} className="flex gap-3 text-sm">
+                          <div className="w-8 h-8 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                            {comment.user?.name?.[0]?.toUpperCase() || 'U'}
+                          </div>
+                          <div className="flex-1 bg-dark-800/80 p-3 rounded-xl border border-slate-700/30">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-semibold text-white text-xs">{comment.user?.name}</span>
+                              <span className="text-[10px] text-slate-500">{formatRelativeTime(comment.createdAt)}</span>
+                            </div>
+                            <p className="text-slate-300 text-sm whitespace-pre-wrap">{comment.text}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-slate-600 italic py-2">No comments yet. Start the conversation below!</p>
+                    )}
+                  </div>
+
+                  {/* Add Comment Input */}
+                  <form onSubmit={handleAddComment} className="flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                      {user?.name?.[0]?.toUpperCase()}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <textarea
+                        rows={2}
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Write a comment..."
+                        className="input text-xs resize-none"
+                        id="comment-input"
+                      />
+                      <div className="flex justify-end">
+                        <Button type="submit" variant="primary" size="sm" loading={addingComment}>
+                          Comment
+                        </Button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* WORK LOGS TAB */}
+            {activeTab === 'worklogs' && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="flex items-center justify-between bg-dark-800/40 p-4 rounded-xl border border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <AiOutlineClockCircle className="text-primary-400" size={18} />
+                    <span className="text-sm font-semibold text-slate-300">Logged Hours Summary</span>
+                  </div>
+                  <span className="text-xs font-bold bg-dark-900 px-3 py-1 rounded-full text-slate-200">
+                    Total Effort: <strong className="text-primary-400">{totalLoggedHours}h</strong> / {selectedTask.estimatedHours || 0}h est
+                  </span>
+                </div>
+
+                {/* Log Hours Form (Only for Assignee or Admin/PM acting) */}
+                {(isAssignee || isAdmin || isPM) && (
+                  <form onSubmit={handleLogWorkSubmit} className="bg-dark-800/30 p-5 rounded-xl border border-slate-700/30 space-y-4">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                      <AiOutlinePlus /> Submit Effort Log
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="md:col-span-2">
+                        <input
+                          type="text"
+                          value={logDesc}
+                          onChange={(e) => setLogDesc(e.target.value)}
+                          placeholder="What did you work on? (Description) *"
+                          className="input text-xs py-2 bg-dark-900"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type="number"
+                          step="0.25"
+                          min="0"
+                          value={logHours}
+                          onChange={(e) => setLogHours(e.target.value)}
+                          placeholder="Hours Worked (e.g. 2.5) *"
+                          className="input text-xs py-2 bg-dark-900"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={logAttach}
+                          onChange={(e) => setLogAttach(e.target.value)}
+                          placeholder="Attachment Link / Document URL (optional)"
+                          className="input text-xs py-2 bg-dark-900"
+                        />
+                      </div>
+                      <Button type="submit" variant="primary" size="sm" loading={submitLogLoading}>
+                        Submit Log
+                      </Button>
+                    </div>
+                  </form>
+                )}
+
+                {/* Effort Logs list */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Effort History</h4>
+                  {logsLoading && workLogs.length === 0 ? (
+                    <div className="flex justify-center py-10"><Spinner size="sm" /></div>
+                  ) : workLogs.length === 0 ? (
+                    <p className="text-xs text-slate-500 italic py-2">No effort logs submitted for this task yet.</p>
+                  ) : (
+                    workLogs.map((log) => (
+                      <div key={log._id} className="card p-4 space-y-4 border border-slate-800/80 bg-dark-850/50">
+                        <div className="flex justify-between items-start gap-4 text-xs">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 font-bold text-[10px] flex items-center justify-center">
+                              {log.employee?.name[0].toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-white">{log.employee?.name}</p>
+                              <p className="text-[9px] text-slate-500">{new Date(log.timestamp).toLocaleString()}</p>
+                            </div>
+                          </div>
+                          <span className="bg-primary-950/40 text-primary-400 border border-primary-800/40 px-2.5 py-0.5 rounded-full font-bold">
+                            {log.hoursWorked} hrs
+                          </span>
+                        </div>
+                        <p className="text-slate-300 text-xs leading-relaxed whitespace-pre-wrap">{log.description}</p>
+                        {log.attachment && (
+                          <div className="flex items-center gap-1.5 text-[11px] text-primary-400 hover:underline">
+                            <AiOutlinePaperClip />
+                            <a href={log.attachment} target="_blank" rel="noreferrer" className="truncate max-w-sm">
+                              {log.attachment}
+                            </a>
+                          </div>
+                        )}
+
+                        {/* Log replies conversation history */}
+                        <div className="border-t border-slate-800/60 pt-3 space-y-3">
+                          {log.replies && log.replies.length > 0 && (
+                            <div className="pl-6 space-y-2.5 border-l-2 border-slate-800">
+                              {log.replies.map((reply) => (
+                                <div key={reply._id} className="text-xs space-y-1 bg-dark-900/40 p-2.5 rounded-lg border border-slate-800/50">
+                                  <div className="flex justify-between text-[9px] text-slate-500 font-bold uppercase">
+                                    <span className="text-slate-300 font-semibold">{reply.name}</span>
+                                    <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
+                                  </div>
+                                  <p className="text-slate-400">{reply.text}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Reply Input Form */}
+                          <form onSubmit={(e) => handleReplySubmit(e, log._id)} className="flex gap-2 pl-6">
+                            <input
+                              type="text"
+                              placeholder="Review and comment on effort log..."
+                              value={replyInputs[log._id] || ''}
+                              onChange={(e) => handleReplyChange(log._id, e.target.value)}
+                              className="input text-xs py-1.5 bg-dark-900 border-slate-700/60 placeholder-slate-500"
+                            />
+                            <button
+                              type="submit"
+                              className="bg-dark-800 text-slate-300 border border-slate-700 hover:text-white hover:bg-dark-700 p-2 rounded-lg transition-colors flex-shrink-0"
+                              title="Send comment"
+                            >
+                              <AiOutlineComment size={14} />
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* HISTORY TIMELINE TAB */}
+            {activeTab === 'history' && (
+              <div className="space-y-6 animate-fade-in">
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Task Activity Trail</h3>
+                {selectedTask.history && selectedTask.history.length > 0 ? (
+                  <div className="relative pl-6 space-y-6 border-l-2 border-slate-800 ml-3 py-1">
+                    {selectedTask.history.map((log, index) => (
+                      <div key={index} className="relative text-xs">
+                        {/* Dot on line */}
+                        <div className="absolute -left-[31px] top-1 w-2.5 h-2.5 rounded-full bg-primary-500 border border-dark-900 flex items-center justify-center flex-shrink-0" />
+                        
+                        <div className="bg-dark-800/40 p-3 rounded-lg border border-slate-800/50 space-y-1">
+                          <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            <span>{log.user?.name || 'System Actor'}</span>
+                            <span>{new Date(log.timestamp).toLocaleString()}</span>
+                          </div>
+                          <p className="text-slate-300 font-medium">
+                            Action: <span className="text-primary-400 capitalize font-bold">{log.action.replace(/_/g, ' ').toLowerCase()}</span>
+                          </p>
+                          {(log.previousValue !== undefined || log.newValue !== undefined) && (
+                            <div className="flex gap-2 items-center bg-dark-900/60 p-2 rounded mt-1 border border-slate-800/80 font-mono text-[10px] text-slate-400">
+                              <span className="text-red-400/80 line-through truncate max-w-[200px]">{String(log.previousValue || 'None')}</span>
+                              <span className="text-slate-500">→</span>
+                              <span className="text-green-400/80 font-bold truncate max-w-[200px]">{String(log.newValue || 'None')}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                  <p className="text-xs text-slate-600 italic py-2">No comments yet. Start the conversation below!</p>
+                  <div className="card p-8 text-center text-slate-500 text-xs italic">
+                    <AiOutlineHistory size={24} className="mx-auto mb-2 text-slate-600" />
+                    No state modifications logged for this task.
+                  </div>
                 )}
               </div>
-
-              {/* Add Comment Input */}
-              <form onSubmit={handleAddComment} className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
-                  Me
-                </div>
-                <div className="flex-1 space-y-2">
-                  <textarea
-                    rows={2}
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Write a comment..."
-                    className="input text-xs resize-none"
-                    id="comment-input"
-                  />
-                  <div className="flex justify-end">
-                    <Button type="submit" variant="primary" size="sm" loading={addingComment}>
-                      Comment
-                    </Button>
-                  </div>
-                </div>
-              </form>
-            </div>
+            )}
           </div>
 
           {/* Sidebar Attributes (Right) */}
-          <div className="w-full md:w-80 p-6 bg-dark-800/20 space-y-5 flex flex-col justify-between overflow-y-auto">
+          <div className="w-full md:w-80 p-6 bg-dark-800/20 space-y-5 flex flex-col justify-between overflow-y-auto flex-shrink-0">
             <div className="space-y-4">
               {/* Status Selector */}
               <div>
@@ -252,89 +550,119 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
                   <option value="todo">To Do</option>
                   <option value="in-progress">In Progress</option>
                   <option value="in-review">In Review</option>
-                  <option value="done">Done</option>
+                  <option value="completed">Completed</option>
+                  <option value="blocked">Blocked</option>
                 </select>
               </div>
 
-              {/* Priority Selector */}
+              {/* Priority Selector (Only Admin/PM can edit, Employees read-only) */}
               <div>
                 <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Priority</label>
-                <select
-                  value={selectedTask.priority}
-                  onChange={(e) => handleUpdate('priority', e.target.value)}
-                  className="input text-sm bg-dark-800"
-                  id="task-detail-priority-select"
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="critical">Critical</option>
-                </select>
+                {isAdmin || isPM ? (
+                  <select
+                    value={selectedTask.priority}
+                    onChange={(e) => handleUpdate('priority', e.target.value)}
+                    className="input text-sm bg-dark-800"
+                    id="task-detail-priority-select"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                ) : (
+                  <div className="capitalize text-slate-300 pl-1 text-sm font-semibold">
+                    <Badge type="priority" value={selectedTask.priority} />
+                  </div>
+                )}
               </div>
 
-              {/* Assignee Selector */}
+              {/* Assignee Selector (Only Admin/PM can edit, Employees read-only) */}
               <div>
                 <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Assignee</label>
-                <select
-                  value={selectedTask.assignedTo?._id || ''}
-                  onChange={(e) => handleUpdate('assignedTo', e.target.value || null)}
-                  className="input text-sm bg-dark-800"
-                  id="task-detail-assignee-select"
-                >
-                  <option value="">Unassigned</option>
-                  {projectMembers.map((member) => (
-                    <option key={member.user._id} value={member.user._id}>
-                      {member.user.name} ({member.role})
-                    </option>
-                  ))}
-                </select>
+                {isAdmin || isPM ? (
+                  <select
+                    value={selectedTask.assignedTo?._id || ''}
+                    onChange={(e) => handleUpdate('assignedTo', e.target.value || null)}
+                    className="input text-sm bg-dark-800"
+                    id="task-detail-assignee-select"
+                  >
+                    <option value="">Unassigned</option>
+                    {projectMembers.map((member) => (
+                      <option key={member.user._id} value={member.user._id}>
+                        {member.user.name} ({member.role})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="flex items-center gap-2 mt-1 text-sm pl-1 font-semibold text-slate-300">
+                    <div className="w-5 h-5 rounded-full bg-slate-700 text-slate-200 text-[10px] font-bold flex items-center justify-center">
+                      {selectedTask.assignedTo?.name?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                    <span>{selectedTask.assignedTo?.name || 'Unassigned'}</span>
+                  </div>
+                )}
               </div>
 
-              {/* Due Date Picker */}
+              {/* Due Date Picker (Only Admin/PM can edit, Employees read-only) */}
               <div>
                 <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   <AiOutlineCalendar size={14} /> Due Date
                 </label>
-                <input
-                  type="date"
-                  value={selectedTask.dueDate ? selectedTask.dueDate.slice(0, 10) : ''}
-                  onChange={(e) => handleUpdate('dueDate', e.target.value || null)}
-                  className="input text-sm bg-dark-800"
-                />
+                {isAdmin || isPM ? (
+                  <input
+                    type="date"
+                    value={selectedTask.dueDate ? selectedTask.dueDate.slice(0, 10) : ''}
+                    onChange={(e) => handleUpdate('dueDate', e.target.value || null)}
+                    className="input text-sm bg-dark-800"
+                  />
+                ) : (
+                  <p className="text-sm text-slate-300 font-semibold pl-1">
+                    {selectedTask.dueDate ? formatDate(selectedTask.dueDate) : 'N/A'}
+                  </p>
+                )}
               </div>
 
-              {/* Estimated Hours Input */}
+              {/* Estimated Hours Input (Only Admin/PM can edit, Employees read-only) */}
               <div>
                 <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   <AiOutlineClockCircle size={14} /> Estimated Hours
                 </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={selectedTask.estimatedHours || ''}
-                  onChange={(e) => handleUpdate('estimatedHours', e.target.value ? Number(e.target.value) : null)}
-                  placeholder="e.g. 5"
-                  className="input text-sm bg-dark-800"
-                />
+                {isAdmin || isPM ? (
+                  <input
+                    type="number"
+                    min="0"
+                    value={selectedTask.estimatedHours || ''}
+                    onChange={(e) => handleUpdate('estimatedHours', e.target.value ? Number(e.target.value) : null)}
+                    placeholder="e.g. 5"
+                    className="input text-sm bg-dark-800"
+                  />
+                ) : (
+                  <p className="text-sm text-slate-300 font-semibold pl-1">
+                    {selectedTask.estimatedHours ? `${selectedTask.estimatedHours} hrs` : 'N/A'}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="border-t border-slate-700/50 pt-5 space-y-4">
-              <div className="text-[11px] text-slate-500 space-y-1">
+              <div className="text-[11px] text-slate-500 space-y-1 pl-1">
                 <p>Created by: {selectedTask.createdBy?.name || 'System'}</p>
                 <p>Created: {formatDate(selectedTask.createdAt)}</p>
                 <p>Last updated: {formatRelativeTime(selectedTask.updatedAt)}</p>
               </div>
 
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={handleDeleteTask}
-                className="w-full justify-center text-xs py-2 bg-red-950/20 border border-red-800/40 text-red-400 hover:bg-red-900 hover:text-white"
-                id="task-detail-delete-btn"
-              >
-                <AiOutlineDelete size={14} /> Delete Task
-              </Button>
+              {(isAdmin || isPM) && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleDeleteTask}
+                  className="w-full justify-center text-xs py-2 bg-red-950/20 border border-red-800/40 text-red-400 hover:bg-red-900 hover:text-white"
+                  id="task-detail-delete-btn"
+                >
+                  <AiOutlineDelete size={14} /> Delete Task
+                </Button>
+              )}
             </div>
           </div>
         </div>

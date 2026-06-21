@@ -1,20 +1,57 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
   AiOutlineDashboard, AiOutlineProject,
   AiOutlineCheckSquare, AiOutlineMenu, AiOutlineClose,
+  AiOutlineTeam, AiOutlinePieChart, AiOutlineBell
 } from 'react-icons/ai'
 import useAuth from '../../hooks/useAuth'
-
-const NAV_LINKS = [
-  { to: '/dashboard', label: 'Dashboard', icon: AiOutlineDashboard   },
-  { to: '/projects',  label: 'Projects',  icon: AiOutlineProject     },
-  { to: '/tasks',     label: 'My Tasks',  icon: AiOutlineCheckSquare },
-]
+import api from '../../api/axios'
 
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false)
   const { user, logout }          = useAuth()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  // Fetch unread notification counts for employees
+  useEffect(() => {
+    if (user && user.role === 'member') {
+      const fetchCount = () => {
+        api.get('/notifications')
+          .then(({ data }) => {
+            const count = data.notifications?.filter(n => !n.isRead).length || 0
+            setUnreadCount(count)
+          })
+          .catch(() => {})
+      }
+      fetchCount()
+      const interval = setInterval(fetchCount, 60000) // check every minute
+      return () => clearInterval(interval)
+    }
+  }, [user])
+
+  // Build role-based links
+  const links = [
+    { to: '/dashboard', label: 'Dashboard', icon: AiOutlineDashboard },
+    { to: '/projects',  label: 'Projects',  icon: AiOutlineProject },
+  ]
+
+  if (user?.role === 'admin') {
+    links.push({ to: '/tasks', label: 'All Tasks', icon: AiOutlineCheckSquare })
+    links.push({ to: '/users', label: 'Manage Users', icon: AiOutlineTeam })
+    links.push({ to: '/reports', label: 'System Reports', icon: AiOutlinePieChart })
+  } else if (user?.role === 'manager') {
+    links.push({ to: '/tasks', label: 'Project Tasks', icon: AiOutlineCheckSquare })
+    links.push({ to: '/reports', label: 'Project Reports', icon: AiOutlinePieChart })
+  } else if (user?.role === 'member') {
+    links.push({ to: '/tasks', label: 'My Tasks', icon: AiOutlineCheckSquare })
+    links.push({
+      to: '/notifications',
+      label: 'Notifications',
+      icon: AiOutlineBell,
+      count: unreadCount,
+    })
+  }
 
   return (
     <aside className={`flex flex-col bg-dark-800 border-r border-slate-700/50 transition-all duration-300
@@ -37,15 +74,31 @@ const Sidebar = () => {
 
       {/* Nav */}
       <nav className="flex-1 p-3 space-y-1">
-        {NAV_LINKS.map(({ to, label, icon: Icon }) => (
+        {links.map(({ to, label, icon: Icon, count }) => (
           <NavLink
             key={to}
             to={to}
-            id={`nav-${label.toLowerCase().replace(' ', '-')}`}
+            id={`nav-${label.toLowerCase().replace(/\s+/g, '-')}`}
             className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
           >
-            <Icon size={20} className="flex-shrink-0" />
-            {!collapsed && <span>{label}</span>}
+            <div className="relative flex items-center justify-center flex-shrink-0">
+              <Icon size={20} />
+              {count > 0 && collapsed && (
+                <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-primary-500 rounded-full flex items-center justify-center text-[9px] text-white font-bold">
+                  {count}
+                </span>
+              )}
+            </div>
+            {!collapsed && (
+              <div className="flex items-center justify-between w-full">
+                <span>{label}</span>
+                {count > 0 && (
+                  <span className="bg-primary-600/80 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {count}
+                  </span>
+                )}
+              </div>
+            )}
           </NavLink>
         ))}
       </nav>
@@ -60,7 +113,9 @@ const Sidebar = () => {
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">{user?.name}</p>
-              <p className="text-xs text-slate-500 truncate capitalize">{user?.role}</p>
+              <p className="text-xs text-slate-500 truncate capitalize">
+                {user?.role === 'member' ? 'Employee' : user?.role === 'manager' ? 'Project Manager' : 'Admin'}
+              </p>
             </div>
           )}
         </div>

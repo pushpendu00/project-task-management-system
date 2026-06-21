@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ['admin', 'manager', 'member'],
-      default: 'member',
+      default: 'member', // member = employee
     },
     avatar: {
       type: String,
@@ -35,6 +35,14 @@ const userSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    passwordResetToken: {
+      type: String,
+      default: null,
+    },
+    passwordResetExpires: {
+      type: Date,
+      default: null,
     },
   },
   {
