@@ -24,6 +24,19 @@ const ProjectCard = ({ project, onEdit, onDelete }) => (
       <Badge type="status"   value={project.status}   />
       <Badge type="priority" value={project.priority} />
     </div>
+    {/* Progress Bar */}
+    <div className="mb-4 space-y-1.5">
+      <div className="flex justify-between items-center text-xs font-semibold">
+        <span className="text-slate-400">Completion</span>
+        <span className="text-primary-400">{project.progress || 0}%</span>
+      </div>
+      <div className="w-full h-1.5 bg-dark-900 rounded-full overflow-hidden border border-slate-800">
+        <div
+          className="h-full bg-primary-500 rounded-full transition-all duration-500"
+          style={{ width: `${project.progress || 0}%` }}
+        />
+      </div>
+    </div>
     <div className="flex items-center justify-between text-xs text-slate-500">
       <div className="flex items-center gap-1">
         <AiOutlineTeam size={14} />

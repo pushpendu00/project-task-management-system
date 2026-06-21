@@ -33,4 +33,10 @@ const notificationSchema = new mongoose.Schema(
 notificationSchema.index({ user: 1, isRead: 1 });
 notificationSchema.index({ createdAt: -1 });
 
+const notificationEvents = require('../utils/notificationEvents');
+
+notificationSchema.post('save', function (doc) {
+  notificationEvents.emit('new-notification', doc);
+});
+
 module.exports = mongoose.model('Notification', notificationSchema);

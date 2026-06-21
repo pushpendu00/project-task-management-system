@@ -127,7 +127,7 @@ const ProjectDetailPage = () => {
   )
 
   return (
-    <div className="animate-fade-in flex flex-col min-h-screen">
+    <div className="animate-fade-in flex flex-col min-h-0">
       {/* Header */}
       <div className="mb-6 flex-shrink-0">
         <button
@@ -298,6 +298,22 @@ const ProjectDetailPage = () => {
                   {project.startDate ? formatDate(project.startDate) : 'N/A'} —{' '}
                   {project.endDate ? formatDate(project.endDate) : 'N/A'}
                 </p>
+              </div>
+
+              <div>
+                <span className="block text-xs text-slate-500 font-semibold uppercase mb-1.5">Project Progress</span>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-xs font-semibold">
+                    <span className="text-slate-400">Completion Percentage</span>
+                    <span className="text-primary-400 font-bold">{project.progress || 0}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-dark-900 rounded-full overflow-hidden border border-slate-800">
+                    <div
+                      className="h-full bg-primary-500 rounded-full transition-all duration-500"
+                      style={{ width: `${project.progress || 0}%` }}
+                    />
+                  </div>
+                </div>
               </div>
 
               {project.tags && project.tags.length > 0 && (

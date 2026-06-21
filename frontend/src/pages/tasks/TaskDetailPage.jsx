@@ -255,7 +255,7 @@ const TaskDetailPage = () => {
   ].sort((a, b) => a.date - b.date)
 
   return (
-    <div className="animate-fade-in flex flex-col min-h-screen">
+    <div className="animate-fade-in flex flex-col min-h-0">
       {/* Back Button */}
       <div className="mb-4">
         <button

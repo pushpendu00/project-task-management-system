@@ -1,4 +1,5 @@
 const Project = require('../models/project.model');
+const Task = require('../models/task.model');
 const { logAction } = require('../utils/auditLogger');
 
 // @desc    Get all projects (with RBAC and filters)
@@ -47,7 +48,19 @@ const getAllProjects = async (req, res) => {
       .populate('members.user', 'name email avatar')
       .sort({ createdAt: -1 });
 
-    res.status(200).json({ success: true, count: projects.length, projects });
+    const projectsWithProgress = await Promise.all(
+      projects.map(async (project) => {
+        const total = await Task.countDocuments({ project: project._id });
+        const completed = await Task.countDocuments({ project: project._id, status: 'completed' });
+        const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+        const projectObj = project.toJSON();
+        projectObj.progress = progress;
+        return projectObj;
+      })
+    );
+
+    res.status(200).json({ success: true, count: projectsWithProgress.length, projects: projectsWithProgress });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -79,7 +92,14 @@ const getProjectById = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not authorized to view this project' });
     }
 
-    res.status(200).json({ success: true, project });
+    const total = await Task.countDocuments({ project: project._id });
+    const completed = await Task.countDocuments({ project: project._id, status: 'completed' });
+    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    const projectObj = project.toJSON();
+    projectObj.progress = progress;
+
+    res.status(200).json({ success: true, project: projectObj });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -166,7 +186,14 @@ const updateProject = async (req, res) => {
       newValue: updated.toJSON(),
     });
 
-    res.status(200).json({ success: true, project: updated });
+    const total = await Task.countDocuments({ project: updated._id });
+    const completed = await Task.countDocuments({ project: updated._id, status: 'completed' });
+    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    const projectObj = updated.toJSON();
+    projectObj.progress = progress;
+
+    res.status(200).json({ success: true, project: projectObj });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -264,7 +291,14 @@ const addMember = async (req, res) => {
       newValue: updated.toJSON(),
     });
 
-    res.status(200).json({ success: true, project: updated });
+    const total = await Task.countDocuments({ project: updated._id });
+    const completed = await Task.countDocuments({ project: updated._id, status: 'completed' });
+    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    const projectObj = updated.toJSON();
+    projectObj.progress = progress;
+
+    res.status(200).json({ success: true, project: projectObj });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -315,7 +349,14 @@ const removeMember = async (req, res) => {
       newValue: updated.toJSON(),
     });
 
-    res.status(200).json({ success: true, message: 'Member removed successfully', project: updated });
+    const total = await Task.countDocuments({ project: updated._id });
+    const completed = await Task.countDocuments({ project: updated._id, status: 'completed' });
+    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    const projectObj = updated.toJSON();
+    projectObj.progress = progress;
+
+    res.status(200).json({ success: true, message: 'Member removed successfully', project: projectObj });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

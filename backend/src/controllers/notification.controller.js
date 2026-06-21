@@ -56,8 +56,43 @@ const markAllAsRead = async (req, res) => {
   }
 };
 
+const notificationEvents = require('../utils/notificationEvents');
+
+// @desc    Stream notifications in real time via Server-Sent Events (SSE)
+// @route   GET /api/notifications/stream
+// @access  Private
+const streamNotifications = (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  const userId = req.user._id.toString();
+
+  // Send a comment heartbeat every 30s to keep connection alive
+  const keepAlive = setInterval(() => {
+    res.write(': keep-alive\n\n');
+  }, 30000);
+
+  const onNotification = (notification) => {
+    if (notification.user && notification.user.toString() === userId) {
+      res.write(`data: ${JSON.stringify(notification)}\n\n`);
+    }
+  };
+
+  notificationEvents.on('new-notification', onNotification);
+
+  req.on('close', () => {
+    clearInterval(keepAlive);
+    notificationEvents.removeListener('new-notification', onNotification);
+    res.end();
+  });
+};
+
 module.exports = {
   getNotifications,
   markAsRead,
   markAllAsRead,
+  streamNotifications,
 };
