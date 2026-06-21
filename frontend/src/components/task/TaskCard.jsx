@@ -12,8 +12,16 @@ const TaskCard = ({ task, onClick, onDragStart }) => (
                hover:shadow-lg hover:shadow-primary-900/10 animate-fade-in group select-none"
     id={`task-card-${task._id}`}
   >
-    <div className="flex items-start gap-2 mb-2">
-      <Badge type="priority" value={task.priority} className="text-[10px] px-2 py-0.5" />
+    <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
+      <Badge type="priority" value={task.priority} className="text-[10px] px-2 py-0.5 flex-shrink-0" />
+      {task.project?.name && (
+        <span
+          className="text-[10px] font-medium text-primary-400 bg-primary-950/20 border border-primary-900/30 px-2 py-0.5 rounded-full truncate max-w-[120px]"
+          title={task.project.name}
+        >
+          📁 {task.project.name}
+        </span>
+      )}
     </div>
     <p className="text-xs font-semibold text-slate-200 mb-1 line-clamp-2 group-hover:text-white leading-tight">
       {task.title}

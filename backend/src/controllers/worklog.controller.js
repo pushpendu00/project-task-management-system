@@ -23,7 +23,7 @@ const submitWorkLog = async (req, res) => {
     const isPM = project && (
       project.owner?.toString() === req.user._id.toString() ||
       project.assignedManager?.toString() === req.user._id.toString() ||
-      project.members?.some(m => m.user.toString() === req.user._id.toString() && m.role === 'manager')
+      project.members?.some(m => m.user.toString() === req.user._id.toString() && (m.role === 'manager' || req.user.role === 'manager'))
     );
 
     if (!isAssignee && !isAdmin && !isPM) {
@@ -92,7 +92,7 @@ const replyToWorkLog = async (req, res) => {
     const isPM = project && (
       project.owner?.toString() === req.user._id.toString() ||
       project.assignedManager?.toString() === req.user._id.toString() ||
-      project.members?.some(m => m.user.toString() === req.user._id.toString() && m.role === 'manager')
+      project.members?.some(m => m.user.toString() === req.user._id.toString() && (m.role === 'manager' || req.user.role === 'manager'))
     );
 
     if (!isOwner && !isAdmin && !isPM) {

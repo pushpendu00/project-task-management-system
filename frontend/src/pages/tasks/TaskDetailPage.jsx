@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import {
   AiOutlineCalendar, AiOutlineClockCircle,
@@ -66,7 +66,9 @@ const TaskDetailPage = () => {
   const { fetchTaskById, updateTask, deleteTask, addComment, loading: taskLoading } = useTasks()
   const { user } = useAuth()
 
-  const [activeTab, setActiveTab] = useState('details') // 'details', 'worklogs'
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeTab = searchParams.get('tab') || 'details'
+  const setActiveTab = (tab) => setSearchParams({ tab })
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [isEditingDesc, setIsEditingDesc] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
@@ -260,28 +262,16 @@ const TaskDetailPage = () => {
   ].sort((a, b) => a.date - b.date)
 
   return (
-    <div className="animate-fade-in flex flex-col min-h-0">
-      {/* Back Button */}
-      <div className="mb-4">
-        <button
-          onClick={() => {
-            if (selectedTask.project?._id) {
-              navigate(`/projects/${selectedTask.project._id}`)
-            } else {
-              navigate('/tasks')
-            }
-          }}
-          className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
-        >
-          <AiOutlineArrowLeft size={16} /> Back to Project
-        </button>
-      </div>
-
+    <div className="animate-fade-in flex flex-col min-h-0 text-xs">
       {/* Main card panel */}
-      <div className="card w-full flex flex-col overflow-hidden border border-slate-700/50">
+      <div className="card w-full flex flex-col overflow-hidden border border-slate-700/50 min-h-0 flex-1">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-700/50 bg-dark-800 flex-shrink-0">
-          <div className="flex-1 mr-4">
+        <div className="flex items-center justify-between p-1.5 px-3 border-b border-slate-700/50 bg-dark-800 flex-shrink-0">
+          <div className="flex items-center gap-1 min-w-0">
+            <Link to="/tasks" className="text-[10px] text-slate-500 hover:text-primary-400 transition-colors font-semibold">
+              Tasks
+            </Link>
+            <span className="text-[10px] text-slate-600">/</span>
             {isEditingTitle && (isAdmin || isPM) ? (
               <input
                 type="text"
@@ -290,11 +280,11 @@ const TaskDetailPage = () => {
                 onBlur={handleTitleSubmit}
                 onKeyDown={(e) => e.key === 'Enter' && handleTitleSubmit()}
                 autoFocus
-                className="input text-lg font-semibold py-1 px-2 border-primary-500"
+                className="input text-xs font-semibold py-0 px-1 border-primary-500 bg-dark-900 text-white w-auto"
               />
             ) : (
               <h2
-                className={`text-lg font-semibold text-white flex items-center gap-2 group ${
+                className={`text-xs font-semibold text-white flex items-center gap-1 group truncate ${
                   isAdmin || isPM ? 'cursor-pointer hover:text-primary-400' : ''
                 }`}
                 onClick={() => {
@@ -306,187 +296,139 @@ const TaskDetailPage = () => {
               >
                 {selectedTask.title}
                 {(isAdmin || isPM) && (
-                  <AiOutlineEdit className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400" size={16} />
+                  <AiOutlineEdit className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 flex-shrink-0" size={10} />
                 )}
               </h2>
             )}
-            <p className="text-xs text-slate-500 mt-1">
-              Project: <span className="text-slate-300 font-medium">{selectedTask.project?.name}</span>
-            </p>
           </div>
-        </div>
-
-        {/* Tab Selection */}
-        <div className="flex bg-dark-800/40 border-b border-slate-700/30 px-5 flex-shrink-0 gap-4">
-          <button
-            onClick={() => setActiveTab('details')}
-            className={`py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-              activeTab === 'details' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Details & Activity
-          </button>
-          <button
-            onClick={() => setActiveTab('worklogs')}
-            className={`py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-              activeTab === 'worklogs' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Work Logs
-          </button>
         </div>
 
         {/* Content Panel */}
         <div className="flex-1 flex flex-col md:flex-row min-h-0 bg-dark-900/40">
           {/* Main Body (Left) */}
-          <div className="flex-1 p-6 space-y-6 border-r border-slate-700/30">
+          <div className="flex-1 p-3.5 border-r border-slate-700/30 flex flex-col min-h-0">
+            {/* Tab Selection (only left side) */}
+            <div className="flex border-b border-slate-700/30 flex-shrink-0 gap-4 mb-2.5">
+              <button
+                onClick={() => setActiveTab('details')}
+                className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b-2 transition-all ${
+                  activeTab === 'details' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Details & Activity
+              </button>
+              <button
+                onClick={() => setActiveTab('worklogs')}
+                className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b-2 transition-all ${
+                  activeTab === 'worklogs' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Work Logs
+              </button>
+            </div>
+
             {/* DETAILS & ACTIVITY TAB */}
             {activeTab === 'details' && (
-              <div className="space-y-6 animate-fade-in">
-                {/* Description */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-semibold text-slate-300">Description</h3>
-                    {!isEditingDesc && (isAdmin || isPM) && (
-                      <button
-                        onClick={() => {
-                          setEditedDesc(selectedTask.description || '')
-                          setIsEditingDesc(true)
-                        }}
-                        className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1"
-                      >
-                        Edit
-                      </button>
-                    )}
-                  </div>
+              <div className="flex-1 flex flex-col min-h-0 space-y-2 animate-fade-in">
+                <h3 className="text-xs font-semibold text-slate-300 flex items-center gap-1.5 flex-shrink-0">
+                  <AiOutlineMessage size={14} /> Activity & Chat ({unifiedFeed.length})
+                </h3>
 
-                  {isEditingDesc ? (
-                    <div className="space-y-2">
-                      <textarea
-                        value={editedDesc}
-                        onChange={(e) => setEditedDesc(e.target.value)}
-                        rows={4}
-                        placeholder="Provide description..."
-                        className="input resize-none"
-                      />
-                      <div className="flex justify-end gap-2">
-                        <Button variant="secondary" size="sm" onClick={() => setIsEditingDesc(false)}>
-                          Cancel
-                        </Button>
-                        <Button variant="primary" size="sm" onClick={handleDescSubmit}>
-                          Save
-                        </Button>
-                      </div>
-                    </div>
+                {/* Scrolling Chat list */}
+                <div className="flex-1 overflow-y-auto space-y-2 pr-1.5 bg-dark-950/20 rounded-lg p-2.5 border border-slate-800/40 min-h-[160px]">
+                  {unifiedFeed.length > 0 ? (
+                    unifiedFeed.map((item) => {
+                      if (item.feedType === 'comment') {
+                        const isCurrentUser = item.user?._id?.toString() === user?._id?.toString();
+                        return (
+                          <div key={item._id} className={`flex gap-2 max-w-[85%] ${isCurrentUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}>
+                            <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-[9px] flex-shrink-0">
+                              {item.user?.name?.[0]?.toUpperCase() || 'U'}
+                            </div>
+                            <div className={`p-2 rounded-lg border ${
+                              isCurrentUser 
+                                ? 'bg-primary-950/40 border-primary-850/40 text-slate-250 rounded-tr-none' 
+                                : 'bg-dark-800/80 border-slate-700/30 text-slate-300 rounded-tl-none'
+                            }`}>
+                              <div className="flex items-center justify-between gap-3 mb-0.5">
+                                <span className="font-bold text-[10px] text-slate-300">{item.user?.name}</span>
+                                <span className="text-[8px] text-slate-500">{formatRelativeTime(item.createdAt)}</span>
+                              </div>
+                              <p className="text-[11px] whitespace-pre-wrap leading-relaxed">{item.text}</p>
+                            </div>
+                          </div>
+                        )
+                      } else {
+                        return (
+                          <div key={item._id || `${item.timestamp}-${item.action}`} className="flex items-center justify-center py-0.5 text-[9px] text-slate-500 mx-auto max-w-[90%] text-center">
+                            <span className="bg-dark-900 border border-slate-800/60 rounded-full px-2.5 py-0.5 leading-snug">
+                              {getHistoryMessage(item)}
+                            </span>
+                          </div>
+                        )
+                      }
+                    })
                   ) : (
-                    <div
-                      className={`text-sm text-slate-400 whitespace-pre-wrap p-3 rounded-lg min-h-[80px] bg-dark-900/50 border border-slate-800 ${
-                        !selectedTask.description ? 'italic text-slate-600' : ''
-                      }`}
-                    >
-                      {selectedTask.description || 'No description provided.'}
-                    </div>
+                    <p className="text-[10px] text-slate-600 italic py-4 text-center">No activity or comments yet. Type a message below!</p>
                   )}
                 </div>
 
-                {/* Activity & Comments Log */}
-                <div className="border-t border-slate-800 pt-6">
-                  <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2 mb-4">
-                    <AiOutlineMessage size={16} /> Activity & Comments ({unifiedFeed.length})
-                  </h3>
-
-                  <div className="space-y-4 mb-4">
-                    {unifiedFeed.length > 0 ? (
-                      unifiedFeed.map((item) => {
-                        if (item.feedType === 'comment') {
-                          return (
-                            <div key={item._id} className="flex gap-3 text-sm">
-                              <div className="w-8 h-8 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                                {item.user?.name?.[0]?.toUpperCase() || 'U'}
-                              </div>
-                              <div className="flex-1 bg-dark-800/80 p-3 rounded-xl border border-slate-700/30">
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="font-semibold text-white text-xs">{item.user?.name}</span>
-                                  <span className="text-[10px] text-slate-500">{formatRelativeTime(item.createdAt)}</span>
-                                </div>
-                                <p className="text-slate-300 text-sm whitespace-pre-wrap">{item.text}</p>
-                              </div>
-                            </div>
-                          )
-                        } else {
-                          return (
-                            <div key={item._id || `${item.timestamp}-${item.action}`} className="flex items-center gap-3 pl-2 text-xs py-1.5 bg-dark-900/30 rounded-lg p-2 border border-slate-800/40">
-                              <div className="w-6 h-6 rounded-full bg-dark-850 text-slate-400 flex items-center justify-center border border-slate-700/30 flex-shrink-0">
-                                {item.action === 'STATUS_CHANGE' && <AiOutlineHistory size={12} />}
-                                {item.action === 'ASSIGNEE_CHANGE' && <AiOutlineUser size={12} />}
-                                {item.action === 'DUE_DATE_CHANGE' && <AiOutlineCalendar size={12} />}
-                                {item.action !== 'STATUS_CHANGE' && item.action !== 'ASSIGNEE_CHANGE' && item.action !== 'DUE_DATE_CHANGE' && <AiOutlineHistory size={12} />}
-                              </div>
-                              <div className="flex-1 text-slate-400">
-                                {getHistoryMessage(item)}
-                                <span className="text-[9px] text-slate-500 ml-2">({formatRelativeTime(item.timestamp)})</span>
-                              </div>
-                            </div>
-                          )
-                        }
-                      })
-                    ) : (
-                      <p className="text-xs text-slate-600 italic py-2">No activity or comments yet. Start the conversation below!</p>
-                    )}
+                {/* Add Comment Input at bottom */}
+                <form onSubmit={handleAddComment} className="flex gap-2 items-end flex-shrink-0 bg-dark-900/60 p-2 rounded-lg border border-slate-800">
+                  <div className="w-6 h-6 rounded-full bg-primary-700 text-white flex items-center justify-center font-bold text-[9px] flex-shrink-0 mb-1">
+                    {user?.name?.[0]?.toUpperCase()}
                   </div>
-
-                  {/* Add Comment Input */}
-                  <form onSubmit={handleAddComment} className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
-                      {user?.name?.[0]?.toUpperCase()}
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <textarea
-                        rows={2}
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        placeholder="Write a comment..."
-                        className="input text-xs resize-none"
-                        id="comment-input"
-                      />
-                      <div className="flex justify-end">
-                        <Button type="submit" variant="primary" size="sm" loading={addingComment}>
-                          Comment
-                        </Button>
-                      </div>
-                    </div>
-                  </form>
-                </div>
+                  <div className="flex-1">
+                    <textarea
+                      rows={1}
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Type a message..."
+                      className="w-full text-xs bg-transparent border-none focus:ring-0 p-1 min-h-[30px] max-h-[70px] resize-none text-slate-200 placeholder-slate-500"
+                      style={{ outline: 'none', boxShadow: 'none' }}
+                      id="comment-input"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleAddComment(e);
+                        }
+                      }}
+                    />
+                  </div>
+                  <Button type="submit" variant="primary" size="xs" loading={addingComment} className="flex-shrink-0 py-1 px-2.5">
+                    Send
+                  </Button>
+                </form>
               </div>
             )}
 
             {/* WORK LOGS TAB */}
             {activeTab === 'worklogs' && (
-              <div className="space-y-6 animate-fade-in">
-                <div className="flex items-center justify-between bg-dark-800/40 p-4 rounded-xl border border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <AiOutlineClockCircle className="text-primary-400" size={18} />
-                    <span className="text-sm font-semibold text-slate-300">Logged Hours Summary</span>
+              <div className="space-y-4 animate-fade-in flex flex-col min-h-0">
+                <div className="flex items-center justify-between bg-dark-800/40 p-2.5 rounded-lg border border-slate-800">
+                  <div className="flex items-center gap-1.5">
+                    <AiOutlineClockCircle className="text-primary-400" size={16} />
+                    <span className="text-[11px] font-semibold text-slate-300">Logged Hours Summary</span>
                   </div>
-                  <span className="text-xs font-bold bg-dark-900 px-3 py-1 rounded-full text-slate-200">
-                    Total Effort: <strong className="text-primary-400">{totalLoggedHours}h</strong> / {selectedTask.estimatedHours || 0}h est
+                  <span className="text-[9px] font-bold bg-dark-900 px-2 py-0.5 rounded-full text-slate-200">
+                    Total: <strong className="text-primary-400">{totalLoggedHours}h</strong> / {selectedTask.estimatedHours || 0}h est
                   </span>
                 </div>
 
                 {/* Log Hours Form (Only for Assignee or Admin/PM acting) */}
                 {(isAssignee || isAdmin || isPM) && (
-                  <form onSubmit={handleLogWorkSubmit} className="bg-dark-800/30 p-5 rounded-xl border border-slate-700/30 space-y-4">
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                      <AiOutlinePlus /> Submit Effort Log
+                  <form onSubmit={handleLogWorkSubmit} className="bg-dark-800/30 p-3 rounded-lg border border-slate-700/30 space-y-3">
+                    <h4 className="text-[9px] font-bold text-white uppercase tracking-wider flex items-center gap-1">
+                      <AiOutlinePlus size={10} /> Submit Effort Log
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="md:col-span-2">
                         <input
                           type="text"
                           value={logDesc}
                           onChange={(e) => setLogDesc(e.target.value)}
-                          placeholder="What did you work on? (Description) *"
-                          className="input text-xs py-2 bg-dark-900"
+                          placeholder="What did you work on? *"
+                          className="input text-xs py-1 bg-dark-900"
                           required
                         />
                       </div>
@@ -497,57 +439,57 @@ const TaskDetailPage = () => {
                           min="0"
                           value={logHours}
                           onChange={(e) => setLogHours(e.target.value)}
-                          placeholder="Hours Worked (e.g. 2.5) *"
-                          className="input text-xs py-2 bg-dark-900"
+                          placeholder="Hours *"
+                          className="input text-xs py-1 bg-dark-900"
                           required
                         />
                       </div>
                     </div>
-                    <div className="flex gap-4">
+                    <div className="flex gap-2">
                       <div className="flex-1">
                         <input
                           type="text"
                           value={logAttach}
                           onChange={(e) => setLogAttach(e.target.value)}
-                          placeholder="Attachment Link / Document URL (optional)"
-                          className="input text-xs py-2 bg-dark-900"
+                          placeholder="Attachment URL (optional)"
+                          className="input text-xs py-1 bg-dark-900"
                         />
                       </div>
-                      <Button type="submit" variant="primary" size="sm" loading={submitLogLoading}>
-                        Submit Log
+                      <Button type="submit" variant="primary" size="xs" loading={submitLogLoading}>
+                        Submit
                       </Button>
                     </div>
                   </form>
                 )}
 
                 {/* Effort Logs list */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Effort History</h4>
+                <div className="space-y-3 overflow-y-auto max-h-[300px] pr-1">
+                  <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Effort History</h4>
                   {logsLoading && workLogs.length === 0 ? (
-                    <div className="flex justify-center py-10"><Spinner size="sm" /></div>
+                    <div className="flex justify-center py-6"><Spinner size="xs" /></div>
                   ) : workLogs.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic py-2">No effort logs submitted for this task yet.</p>
+                    <p className="text-[11px] text-slate-500 italic py-1">No effort logs submitted for this task yet.</p>
                   ) : (
                     workLogs.map((log) => (
-                      <div key={log._id} className="card p-4 space-y-4 border border-slate-800/80 bg-dark-850/50">
-                        <div className="flex justify-between items-start gap-4 text-xs">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 font-bold text-[10px] flex items-center justify-center">
-                              {log.employee?.name[0].toUpperCase()}
+                      <div key={log._id} className="card p-3 space-y-2 border border-slate-800 bg-dark-850/30 text-xs">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-5 h-5 rounded-full bg-slate-700 text-slate-200 font-bold text-[9px] flex items-center justify-center">
+                              {log.employee?.name?.[0]?.toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-semibold text-white">{log.employee?.name}</p>
+                              <p className="font-semibold text-slate-200 text-xs">{log.employee?.name}</p>
                               <p className="text-[9px] text-slate-500">{new Date(log.timestamp).toLocaleString()}</p>
                             </div>
                           </div>
-                          <span className="bg-primary-950/40 text-primary-400 border border-primary-800/40 px-2.5 py-0.5 rounded-full font-bold">
+                          <span className="bg-primary-950/40 text-primary-400 border border-primary-800/40 px-2 py-0.5 rounded-full font-bold text-[9px]">
                             {log.hoursWorked} hrs
                           </span>
                         </div>
-                        <p className="text-slate-300 text-xs leading-relaxed whitespace-pre-wrap">{log.description}</p>
+                        <p className="text-slate-300 text-[11px] leading-relaxed whitespace-pre-wrap">{log.description}</p>
                         {log.attachment && (
-                          <div className="flex items-center gap-1.5 text-[11px] text-primary-400 hover:underline">
-                            <AiOutlinePaperClip />
+                          <div className="flex items-center gap-1 text-[10px] text-primary-400 hover:underline">
+                            <AiOutlinePaperClip size={10} />
                             <a href={log.attachment} target="_blank" rel="noreferrer" className="truncate max-w-sm">
                               {log.attachment}
                             </a>
@@ -555,12 +497,12 @@ const TaskDetailPage = () => {
                         )}
 
                         {/* Log replies conversation history */}
-                        <div className="border-t border-slate-800/60 pt-3 space-y-3">
+                        <div className="border-t border-slate-800/60 pt-2 space-y-2">
                           {log.replies && log.replies.length > 0 && (
-                            <div className="pl-6 space-y-2.5 border-l-2 border-slate-800">
+                            <div className="pl-4 space-y-1.5 border-l-2 border-slate-800">
                               {log.replies.map((reply) => (
-                                <div key={reply._id} className="text-xs space-y-1 bg-dark-900/40 p-2.5 rounded-lg border border-slate-800/50">
-                                  <div className="flex justify-between text-[9px] text-slate-500 font-bold uppercase">
+                                <div key={reply._id} className="text-[10px] space-y-0.5 bg-dark-900/40 p-2 rounded border border-slate-800/50">
+                                  <div className="flex justify-between text-[8px] text-slate-500 font-bold uppercase">
                                     <span className="text-slate-300 font-semibold">{reply.name}</span>
                                     <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
                                   </div>
@@ -571,20 +513,20 @@ const TaskDetailPage = () => {
                           )}
 
                           {/* Reply Input Form */}
-                          <form onSubmit={(e) => handleReplySubmit(e, log._id)} className="flex gap-2 pl-6">
+                          <form onSubmit={(e) => handleReplySubmit(e, log._id)} className="flex gap-1.5 pl-4">
                             <input
                               type="text"
-                              placeholder="Review and comment on effort log..."
+                              placeholder="Reply to effort log..."
                               value={replyInputs[log._id] || ''}
                               onChange={(e) => handleReplyChange(log._id, e.target.value)}
-                              className="input text-xs py-1.5 bg-dark-900 border-slate-700/60 placeholder-slate-500"
+                              className="input text-[11px] py-1 bg-dark-900 border-slate-700/60 placeholder-slate-500"
                             />
                             <button
                               type="submit"
-                              className="bg-dark-800 text-slate-300 border border-slate-700 hover:text-white hover:bg-dark-700 p-2 rounded-lg transition-colors flex-shrink-0"
-                              title="Send comment"
+                              className="bg-dark-800 text-slate-300 border border-slate-700 hover:text-white hover:bg-dark-700 p-1.5 rounded transition-colors flex-shrink-0"
+                              title="Send reply"
                             >
-                              <AiOutlineComment size={14} />
+                              <AiOutlineComment size={12} />
                             </button>
                           </form>
                         </div>
@@ -597,15 +539,69 @@ const TaskDetailPage = () => {
           </div>
 
           {/* Sidebar Attributes (Right) */}
-          <div className="w-full md:w-80 p-6 bg-dark-800/20 space-y-5 flex flex-col justify-between flex-shrink-0">
-            <div className="space-y-4">
+          <div className="w-full md:w-64 p-3.5 bg-dark-800/20 space-y-3.5 flex flex-col justify-between flex-shrink-0 text-xs overflow-y-auto border-t md:border-t-0 md:border-l border-slate-700/30">
+            <div className="space-y-3.5">
+              {/* Project Title (right side) */}
+              <div>
+                <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Project</label>
+                <div className="text-slate-200 font-medium truncate bg-dark-800/60 p-1.5 px-2 rounded border border-slate-800/80">
+                  📁 {selectedTask.project?.name || 'Unknown Project'}
+                </div>
+              </div>
+
+              {/* Description (right side) */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Description</label>
+                  {!isEditingDesc && (isAdmin || isPM) && (
+                    <button
+                      onClick={() => {
+                        setEditedDesc(selectedTask.description || '')
+                        setIsEditingDesc(true)
+                      }}
+                      className="text-[9px] text-primary-400 hover:text-primary-300 flex items-center gap-0.5"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+
+                {isEditingDesc ? (
+                  <div className="space-y-1">
+                    <textarea
+                      value={editedDesc}
+                      onChange={(e) => setEditedDesc(e.target.value)}
+                      rows={3}
+                      placeholder="Provide description..."
+                      className="input text-xs resize-none p-1.5 bg-dark-900 text-slate-200"
+                    />
+                    <div className="flex justify-end gap-1">
+                      <Button variant="secondary" size="xs" onClick={() => setIsEditingDesc(false)} className="py-0.5 px-1.5 text-[10px]">
+                        Cancel
+                      </Button>
+                      <Button variant="primary" size="xs" onClick={handleDescSubmit} className="py-0.5 px-1.5 text-[10px]">
+                        Save
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className={`text-[11px] text-slate-400 whitespace-pre-wrap p-2 rounded bg-dark-900/40 border border-slate-800/80 min-h-[40px] leading-normal ${
+                      !selectedTask.description ? 'italic text-slate-600' : ''
+                    }`}
+                  >
+                    {selectedTask.description || 'No description provided.'}
+                  </div>
+                )}
+              </div>
+
               {/* Status Selector */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Status</label>
+                <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Status</label>
                 <select
                   value={selectedTask.status}
                   onChange={(e) => handleUpdate('status', e.target.value)}
-                  className="input text-sm bg-dark-800"
+                  className="input text-xs py-1 bg-dark-800 text-white"
                   id="task-detail-status-select"
                 >
                   <option value="todo">To Do</option>
@@ -618,12 +614,12 @@ const TaskDetailPage = () => {
 
               {/* Priority Selector (Only Admin/PM can edit, Employees read-only) */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Priority</label>
+                <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Priority</label>
                 {isAdmin || isPM ? (
                   <select
                     value={selectedTask.priority}
                     onChange={(e) => handleUpdate('priority', e.target.value)}
-                    className="input text-sm bg-dark-800"
+                    className="input text-xs py-1 bg-dark-800 text-white"
                     id="task-detail-priority-select"
                   >
                     <option value="low">Low</option>
@@ -632,20 +628,20 @@ const TaskDetailPage = () => {
                     <option value="critical">Critical</option>
                   </select>
                 ) : (
-                  <div className="capitalize text-slate-300 pl-1 text-sm font-semibold">
-                    <Badge type="priority" value={selectedTask.priority} />
+                  <div className="capitalize text-slate-300 pl-0.5 text-xs font-semibold">
+                    <Badge type="priority" value={selectedTask.priority} className="text-[10px] px-2 py-0.5" />
                   </div>
                 )}
               </div>
 
               {/* Assignee Selector (Admin/PM/Project Member can edit) */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Assignee</label>
+                <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Assignee</label>
                 {canEditAssigneeAndTimeline ? (
                   <select
                     value={selectedTask.assignedTo?._id || ''}
                     onChange={(e) => handleUpdate('assignedTo', e.target.value || null)}
-                    className="input text-sm bg-dark-800"
+                    className="input text-xs py-1 bg-dark-800 text-white"
                     id="task-detail-assignee-select"
                   >
                     <option value="">Unassigned</option>
@@ -656,8 +652,8 @@ const TaskDetailPage = () => {
                     ))}
                   </select>
                 ) : (
-                  <div className="flex items-center gap-2 mt-1 text-sm pl-1 font-semibold text-slate-300">
-                    <div className="w-5 h-5 rounded-full bg-slate-700 text-slate-200 text-[10px] font-bold flex items-center justify-center">
+                  <div className="flex items-center gap-1.5 mt-0.5 text-xs pl-0.5 font-semibold text-slate-300">
+                    <div className="w-4.5 h-4.5 rounded-full bg-slate-700 text-slate-200 text-[9px] font-bold flex-shrink-0 flex items-center justify-center">
                       {selectedTask.assignedTo?.name?.[0]?.toUpperCase() || 'U'}
                     </div>
                     <span>{selectedTask.assignedTo?.name || 'Unassigned'}</span>
@@ -667,18 +663,18 @@ const TaskDetailPage = () => {
 
               {/* Due Date Picker (Admin/PM/Project Member can edit) */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <AiOutlineCalendar size={14} /> Due Date
+                <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <AiOutlineCalendar size={12} /> Due Date
                 </label>
                 {canEditAssigneeAndTimeline ? (
                   <input
                     type="date"
                     value={selectedTask.dueDate ? selectedTask.dueDate.slice(0, 10) : ''}
                     onChange={(e) => handleUpdate('dueDate', e.target.value || null)}
-                    className="input text-sm bg-dark-800"
+                    className="input text-xs py-1 bg-dark-800 text-white"
                   />
                 ) : (
-                  <p className="text-sm text-slate-300 font-semibold pl-1">
+                  <p className="text-xs text-slate-300 font-semibold pl-0.5">
                     {selectedTask.dueDate ? formatDate(selectedTask.dueDate) : 'N/A'}
                   </p>
                 )}
@@ -686,8 +682,8 @@ const TaskDetailPage = () => {
 
               {/* Estimated Hours Input (Only Admin/PM can edit, Employees read-only) */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <AiOutlineClockCircle size={14} /> Estimated Hours
+                <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <AiOutlineClockCircle size={12} /> Estimated Hours
                 </label>
                 {isAdmin || isPM ? (
                   <input
@@ -696,18 +692,18 @@ const TaskDetailPage = () => {
                     value={localHours}
                     onChange={(e) => setLocalHours(e.target.value)}
                     placeholder="e.g. 5"
-                    className="input text-sm bg-dark-800"
+                    className="input text-xs py-1 bg-dark-800 text-white"
                   />
                 ) : (
-                  <p className="text-sm text-slate-300 font-semibold pl-1">
+                  <p className="text-xs text-slate-300 font-semibold pl-0.5">
                     {selectedTask.estimatedHours ? `${selectedTask.estimatedHours} hrs` : 'N/A'}
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="border-t border-slate-700/50 pt-5 space-y-4">
-              <div className="text-[11px] text-slate-500 space-y-1 pl-1">
+            <div className="border-t border-slate-700/50 pt-4 space-y-3">
+              <div className="text-[9px] text-slate-500 space-y-0.5 pl-0.5">
                 <p>Created by: {selectedTask.createdBy?.name || 'System'}</p>
                 <p>Created: {formatDate(selectedTask.createdAt)}</p>
                 <p>Last updated: {formatRelativeTime(selectedTask.updatedAt)}</p>
@@ -716,12 +712,12 @@ const TaskDetailPage = () => {
               {(isAdmin || isPM) && (
                 <Button
                   variant="danger"
-                  size="sm"
+                  size="xs"
                   onClick={handleDeleteClick}
-                  className="w-full justify-center text-xs py-2 bg-red-950/20 border border-red-800/40 text-red-400 hover:bg-red-900 hover:text-white"
+                  className="w-full justify-center text-[10px] py-1.5 bg-red-950/20 border border-red-800/40 text-red-400 hover:bg-red-900 hover:text-white"
                   id="task-detail-delete-btn"
                 >
-                  <AiOutlineDelete size={14} /> Delete Task
+                  <AiOutlineDelete size={12} /> Delete Task
                 </Button>
               )}
             </div>

@@ -237,9 +237,9 @@ const getProjectReport = async (req, res) => {
     }
 
     // RBAC: Verify PM or Admin access
-    const isOwner = project.owner.toString() === req.user._id.toString();
-    const isAssignedPM = project.assignedManager && project.assignedManager.toString() === req.user._id.toString();
-    const isManagerInTeam = project.members?.some(m => m.user.toString() === req.user._id.toString() && m.role === 'manager');
+    const isOwner = (project.owner?._id || project.owner).toString() === req.user._id.toString();
+    const isAssignedPM = project.assignedManager && (project.assignedManager?._id || project.assignedManager).toString() === req.user._id.toString();
+    const isManagerInTeam = project.members?.some(m => (m.user?._id || m.user).toString() === req.user._id.toString() && (m.role === 'manager' || req.user.role === 'manager'));
     const isAdmin = req.user.role === 'admin';
 
     if (!isOwner && !isAssignedPM && !isManagerInTeam && !isAdmin) {
@@ -290,15 +290,14 @@ const getProjectReport = async (req, res) => {
 
 // @desc    Get employee performance reports
 // @route   GET /api/reports/employees
-// @access  Private (Admin & PM)
+// @access  Private (Admin only)
 const getEmployeeReport = async (req, res) => {
   try {
-    // Only Admin and Managers can access reports
-    if (req.user.role !== 'admin' && req.user.role !== 'manager') {
+    // Only Admin can access reports
+    if (req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Not authorized to view employee reports' });
     }
 
-    // Get all employees (role: member)
     const employees = await User.find({ role: 'member', isActive: true }).select('name email avatar');
     const reportData = [];
 

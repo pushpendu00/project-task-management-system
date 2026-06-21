@@ -5,6 +5,7 @@ import {
   AiOutlineHistory, AiOutlineProject, AiOutlineClockCircle
 } from 'react-icons/ai'
 import { useRecoilValue } from 'recoil'
+import { useSearchParams } from 'react-router-dom'
 import html2pdf from 'html2pdf.js'
 import { authUserAtom } from '../../recoil/atoms/authAtom'
 import api from '../../api/axios'
@@ -12,7 +13,17 @@ import Spinner from '../../components/common/Spinner'
 
 const ReportsPage = () => {
   const user = useRecoilValue(authUserAtom)
-  const [activeTab, setActiveTab] = useState('projects')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const rawTab = searchParams.get('tab') || 'projects'
+  const isAdmin = user?.role === 'admin'
+  const activeTab = (rawTab === 'employees' || rawTab === 'audit') && !isAdmin ? 'projects' : rawTab
+  const setActiveTab = (tab) => setSearchParams({ tab })
+
+  useEffect(() => {
+    if (rawTab !== activeTab) {
+      setSearchParams({ tab: activeTab }, { replace: true })
+    }
+  }, [rawTab, activeTab, setSearchParams])
   const [projectsList, setProjectsList] = useState([])
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [projectReport, setProjectReport] = useState(null)
@@ -91,8 +102,6 @@ const ReportsPage = () => {
       .catch(() => toast.error('Failed to export PDF', { id: 'pdf-toast' }))
   }
 
-  const isAdmin = user?.role === 'admin'
-
   return (
     <div className="animate-fade-in space-y-6 max-w-6xl mx-auto">
       {/* Header */}
@@ -118,14 +127,16 @@ const ReportsPage = () => {
         >
           Project Performance
         </button>
-        <button
-          onClick={() => setActiveTab('employees')}
-          className={`pb-2.5 font-semibold text-sm border-b-2 transition-all ${
-            activeTab === 'employees' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Employee Productivity
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setActiveTab('employees')}
+            className={`pb-2.5 font-semibold text-sm border-b-2 transition-all ${
+              activeTab === 'employees' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Employee Productivity
+          </button>
+        )}
         {isAdmin && (
           <button
             onClick={() => setActiveTab('audit')}

@@ -92,14 +92,14 @@ const getTaskById = async (req, res) => {
 
     // RBAC: Verify permission to read task
     const isAdmin = req.user.role === 'admin';
-    const isAssignee = task.assignedTo?._id.toString() === req.user._id.toString();
+    const isAssignee = task.assignedTo && (task.assignedTo._id || task.assignedTo).toString() === req.user._id.toString();
     
     // PM of project
     const project = task.project;
     const isPM = project && (
-      project.owner?.toString() === req.user._id.toString() ||
-      project.assignedManager?.toString() === req.user._id.toString() ||
-      project.members?.some(m => m.user.toString() === req.user._id.toString() && m.role === 'manager')
+      (project.owner?._id || project.owner)?.toString() === req.user._id.toString() ||
+      (project.assignedManager?._id || project.assignedManager)?.toString() === req.user._id.toString() ||
+      project.members?.some(m => (m.user?._id || m.user)?.toString() === req.user._id.toString() && (m.role === 'manager' || req.user.role === 'manager'))
     );
 
     if (!isAdmin && !isAssignee && !isPM) {
@@ -128,7 +128,7 @@ const createTask = async (req, res) => {
     const isAdmin = req.user.role === 'admin';
     const isOwner = project.owner.toString() === req.user._id.toString();
     const isAssignedPM = project.assignedManager && project.assignedManager.toString() === req.user._id.toString();
-    const isManagerInTeam = project.members?.some(m => m.user.toString() === req.user._id.toString() && m.role === 'manager');
+    const isManagerInTeam = project.members?.some(m => m.user.toString() === req.user._id.toString() && (m.role === 'manager' || req.user.role === 'manager'));
 
     if (!isAdmin && !isOwner && !isAssignedPM && !isManagerInTeam) {
       return res.status(403).json({ success: false, message: 'Not authorized to create tasks in this project' });
@@ -142,6 +142,7 @@ const createTask = async (req, res) => {
     await task.populate([
       { path: 'assignedTo', select: 'name email avatar' },
       { path: 'createdBy', select: 'name email avatar' },
+      { path: 'project', select: 'name' }
     ]);
 
     // Add assignment notification if assigned during creation
@@ -201,7 +202,7 @@ const updateTask = async (req, res) => {
     const project = task.project;
     const isOwner = project.owner.toString() === req.user._id.toString();
     const isAssignedPM = project.assignedManager && project.assignedManager.toString() === req.user._id.toString();
-    const isManagerInTeam = project.members?.some(m => m.user.toString() === req.user._id.toString() && m.role === 'manager');
+    const isManagerInTeam = project.members?.some(m => m.user.toString() === req.user._id.toString() && (m.role === 'manager' || req.user.role === 'manager'));
     const isPM = isOwner || isAssignedPM || isManagerInTeam;
 
     const isProjectMember = project.members?.some(m => m.user.toString() === req.user._id.toString());
@@ -356,7 +357,7 @@ const deleteTask = async (req, res) => {
     const project = task.project;
     const isOwner = project.owner.toString() === req.user._id.toString();
     const isAssignedPM = project.assignedManager && project.assignedManager.toString() === req.user._id.toString();
-    const isManagerInTeam = project.members?.some(m => m.user.toString() === req.user._id.toString() && m.role === 'manager');
+    const isManagerInTeam = project.members?.some(m => m.user.toString() === req.user._id.toString() && (m.role === 'manager' || req.user.role === 'manager'));
     const isAdmin = req.user.role === 'admin';
 
     // Only Admin or PM can delete

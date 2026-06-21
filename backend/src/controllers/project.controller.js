@@ -156,7 +156,7 @@ const updateProject = async (req, res) => {
     // RBAC: Only Admins or the assigned Project Manager can update the project details
     const isOwner = project.owner.toString() === req.user._id.toString();
     const isAssignedPM = project.assignedManager && project.assignedManager.toString() === req.user._id.toString();
-    const isManagerInTeam = project.members?.some(m => m.user.toString() === req.user._id.toString() && m.role === 'manager');
+    const isManagerInTeam = project.members?.some(m => m.user.toString() === req.user._id.toString() && (m.role === 'manager' || req.user.role === 'manager'));
     const isAdmin = req.user.role === 'admin';
 
     if (!isOwner && !isAssignedPM && !isManagerInTeam && !isAdmin) {
@@ -256,7 +256,7 @@ const addMember = async (req, res) => {
     // RBAC: Only Admin or Project Manager of this project can add members
     const isOwner = project.owner.toString() === req.user._id.toString();
     const isAssignedPM = project.assignedManager && project.assignedManager.toString() === req.user._id.toString();
-    const isManagerInTeam = project.members?.some(m => m.user.toString() === req.user._id.toString() && m.role === 'manager');
+    const isManagerInTeam = project.members?.some(m => m.user.toString() === req.user._id.toString() && (m.role === 'manager' || req.user.role === 'manager'));
     const isAdmin = req.user.role === 'admin';
 
     if (!isOwner && !isAssignedPM && !isManagerInTeam && !isAdmin) {
@@ -320,7 +320,7 @@ const removeMember = async (req, res) => {
     // RBAC: Only Admin or Project Manager of this project can remove members
     const isOwner = project.owner.toString() === req.user._id.toString();
     const isAssignedPM = project.assignedManager && project.assignedManager.toString() === req.user._id.toString();
-    const isManagerInTeam = project.members?.some(m => m.user.toString() === req.user._id.toString() && m.role === 'manager');
+    const isManagerInTeam = project.members?.some(m => m.user.toString() === req.user._id.toString() && (m.role === 'manager' || req.user.role === 'manager'));
     const isAdmin = req.user.role === 'admin';
 
     if (!isOwner && !isAssignedPM && !isManagerInTeam && !isAdmin) {
