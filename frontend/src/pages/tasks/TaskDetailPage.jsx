@@ -1,29 +1,71 @@
 import React, { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import {
-  AiOutlineClose, AiOutlineCalendar, AiOutlineClockCircle,
+  AiOutlineCalendar, AiOutlineClockCircle,
   AiOutlineUser, AiOutlineDelete, AiOutlineMessage, AiOutlineEdit,
-  AiOutlinePaperClip, AiOutlinePlus, AiOutlineHistory, AiOutlineComment
+  AiOutlinePaperClip, AiOutlinePlus, AiOutlineHistory, AiOutlineComment,
+  AiOutlineArrowLeft
 } from 'react-icons/ai'
 import { selectedTaskAtom } from '../../recoil/atoms/taskAtom'
-import { selectedProjectAtom } from '../../recoil/atoms/projectAtom'
 import useTasks from '../../hooks/useTasks'
 import useAuth from '../../hooks/useAuth'
-import Badge from '../common/Badge'
-import Spinner from '../common/Spinner'
-import Button from '../common/Button'
+import Badge from '../../components/common/Badge'
+import Spinner from '../../components/common/Spinner'
+import Button from '../../components/common/Button'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 import { formatDate, formatRelativeTime } from '../../utils/formatDate'
 
-const TaskDetailModal = ({ isOpen, onClose }) => {
+const getHistoryMessage = (log) => {
+  const userName = log.user?.name || 'System Actor'
+  const action = log.action
+  const prevVal = log.previousValue || 'None'
+  const newVal = log.newValue || 'None'
+
+  switch (action) {
+    case 'STATUS_CHANGE':
+      return (
+        <span>
+          <strong className="text-slate-300">{userName}</strong> updated status from{' '}
+          <span className="text-red-400 bg-red-950/20 px-1.5 py-0.5 rounded text-[10px] font-mono">{prevVal}</span> to{' '}
+          <span className="text-green-400 bg-green-950/20 px-1.5 py-0.5 rounded text-[10px] font-mono">{newVal}</span>
+        </span>
+      )
+    case 'ASSIGNEE_CHANGE':
+      return (
+        <span>
+          <strong className="text-slate-300">{userName}</strong> reassigned task from{' '}
+          <strong className="text-slate-400">{prevVal}</strong> to{' '}
+          <strong className="text-primary-400">{newVal}</strong>
+        </span>
+      )
+    case 'DUE_DATE_CHANGE':
+      return (
+        <span>
+          <strong className="text-slate-300">{userName}</strong> changed due date from{' '}
+          <span className="text-slate-400 line-through">{prevVal}</span> to{' '}
+          <span className="text-primary-400 font-bold">{newVal}</span>
+        </span>
+      )
+    default:
+      return (
+        <span>
+          <strong className="text-slate-300">{userName}</strong> performed action{' '}
+          <span className="text-primary-400 capitalize">{action.replace(/_/g, ' ').toLowerCase()}</span>
+        </span>
+      )
+  }
+}
+
+const TaskDetailPage = () => {
+  const { id } = useParams()
+  const navigate = useNavigate()
   const [selectedTask, setSelectedTask] = useRecoilState(selectedTaskAtom)
-  const selectedProject = useRecoilValue(selectedProjectAtom)
   const { fetchTaskById, updateTask, deleteTask, addComment } = useTasks()
   const { user } = useAuth()
 
-  const [activeTab, setActiveTab] = useState('details') // 'details', 'worklogs', 'history'
+  const [activeTab, setActiveTab] = useState('details') // 'details', 'worklogs'
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [isEditingDesc, setIsEditingDesc] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
@@ -42,35 +84,46 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
   const [submitLogLoading, setSubmitLogLoading] = useState(false)
   const [replyInputs, setReplyInputs] = useState({}) // { logId: 'reply text' }
 
-  // Fetch full task details (including comments & history) when modal opens/changes
+  // Estimated Hours debounced state
+  const [localHours, setLocalHours] = useState('')
+
+  // Fetch full task details (including comments & history) on load
   useEffect(() => {
-    if (isOpen && selectedTask?._id) {
-      fetchTaskById(selectedTask._id).then((fullTask) => {
+    if (id) {
+      fetchTaskById(id).then((fullTask) => {
         if (fullTask) {
           setEditedTitle(fullTask.title)
           setEditedDesc(fullTask.description || '')
+          setLocalHours(fullTask.estimatedHours || '')
         }
       })
       fetchWorkLogs()
     }
-  }, [isOpen, selectedTask?._id]) // eslint-disable-line
+  }, [id]) // eslint-disable-line
 
+  // Synchronize local hours with selectedTask.estimatedHours when it changes externally
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
+    if (selectedTask?.estimatedHours !== undefined) {
+      setLocalHours(selectedTask.estimatedHours || '')
     }
-    return () => {
-      document.body.style.overflow = ''
+  }, [selectedTask?.estimatedHours])
+
+  // Debounce Estimated Hours updates to backend
+  useEffect(() => {
+    const savedHours = selectedTask?.estimatedHours || ''
+    if (localHours !== savedHours) {
+      const delayDebounce = setTimeout(() => {
+        handleUpdate('estimatedHours', localHours ? Number(localHours) : null)
+      }, 800)
+      return () => clearTimeout(delayDebounce)
     }
-  }, [isOpen])
+  }, [localHours]) // eslint-disable-line
 
   const fetchWorkLogs = async () => {
-    if (!selectedTask?._id) return
+    if (!id) return
     try {
       setLogsLoading(true)
-      const { data } = await api.get(`/worklogs?task=${selectedTask._id}`)
+      const { data } = await api.get(`/worklogs?task=${id}`)
       setWorkLogs(data.workLogs || [])
     } catch (error) {
       console.error('Failed to load work logs', error)
@@ -79,10 +132,8 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
     }
   }
 
-  if (!isOpen || !selectedTask) return null
-
   const handleUpdate = async (field, value) => {
-    await updateTask(selectedTask._id, { [field]: value })
+    await updateTask(id, { [field]: value })
   }
 
   const handleTitleSubmit = async () => {
@@ -104,7 +155,7 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
     if (!newComment.trim()) return
     try {
       setAddingComment(true)
-      await addComment(selectedTask._id, newComment)
+      await addComment(id, newComment)
       setNewComment('')
     } finally {
       setAddingComment(false)
@@ -113,9 +164,14 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
 
   const handleDeleteTask = async () => {
     if (window.confirm('Are you sure you want to delete this task?')) {
-      await deleteTask(selectedTask._id)
+      const projectId = selectedTask.project?._id
+      await deleteTask(id)
       setSelectedTask(null)
-      onClose()
+      if (projectId) {
+        navigate(`/projects/${projectId}`)
+      } else {
+        navigate('/tasks')
+      }
     }
   }
 
@@ -129,7 +185,7 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
     try {
       setSubmitLogLoading(true)
       await api.post('/worklogs', {
-        task: selectedTask._id,
+        task: id,
         description: logDesc,
         hoursWorked: Number(logHours),
         attachment: logAttach,
@@ -165,24 +221,59 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
     }
   }
 
-  const projectMembers = selectedProject?.members || []
+  if (!selectedTask) {
+    return (
+      <div className="flex justify-center py-24"><Spinner size="lg" /></div>
+    )
+  }
 
-  // Check role and permissions
+  const projectMembers = selectedTask.project?.members || []
+
+  // Check role and permissions using task's project info
   const isAssignee = selectedTask.assignedTo?._id === user?._id
   const isAdmin = user?.role === 'admin'
-  const isPM = selectedProject?.owner?._id === user?._id ||
-               selectedProject?.assignedManager === user?._id ||
-               selectedProject?.members?.some(m => m.user?._id === user?._id && m.role === 'manager')
+  const isPM = (selectedTask.project?.owner?._id || selectedTask.project?.owner) === user?._id ||
+               (selectedTask.project?.assignedManager?._id || selectedTask.project?.assignedManager) === user?._id ||
+               selectedTask.project?.members?.some(m => (m.user?._id || m.user) === user?._id && m.role === 'manager')
+  const isProjectMember = selectedTask.project?.members?.some(m => (m.user?._id || m.user) === user?._id)
+  const canEditAssigneeAndTimeline = isAdmin || isPM || isProjectMember
 
   const totalLoggedHours = workLogs.reduce((sum, log) => sum + log.hoursWorked, 0)
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-dark-950/80 backdrop-blur-sm animate-fade-in" />
-      <div
-        className="relative card w-full max-w-4xl max-h-[90vh] flex flex-col animate-slide-in overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+  // Combine comments and history into a unified activity feed
+  const unifiedFeed = [
+    ...(selectedTask.comments || []).map((c) => ({
+      ...c,
+      feedType: 'comment',
+      date: new Date(c.createdAt),
+    })),
+    ...(selectedTask.history || []).map((h) => ({
+      ...h,
+      feedType: 'history',
+      date: new Date(h.timestamp),
+    })),
+  ].sort((a, b) => a.date - b.date)
+
+  return (
+    <div className="animate-fade-in flex flex-col min-h-screen">
+      {/* Back Button */}
+      <div className="mb-4">
+        <button
+          onClick={() => {
+            if (selectedTask.project?._id) {
+              navigate(`/projects/${selectedTask.project._id}`)
+            } else {
+              navigate('/tasks')
+            }
+          }}
+          className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+        >
+          <AiOutlineArrowLeft size={16} /> Back to Project
+        </button>
+      </div>
+
+      {/* Main card panel */}
+      <div className="card w-full flex flex-col overflow-hidden border border-slate-700/50">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-700/50 bg-dark-800 flex-shrink-0">
           <div className="flex-1 mr-4">
@@ -215,16 +306,9 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
               </h2>
             )}
             <p className="text-xs text-slate-500 mt-1">
-              Project: <span className="text-slate-300 font-medium">{selectedTask.project?.name || selectedProject?.name}</span>
+              Project: <span className="text-slate-300 font-medium">{selectedTask.project?.name}</span>
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-700 transition-colors flex-shrink-0"
-            id="task-detail-close-btn"
-          >
-            <AiOutlineClose size={18} />
-          </button>
         </div>
 
         {/* Tab Selection */}
@@ -235,7 +319,7 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
               activeTab === 'details' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
-            Details & Comments
+            Details & Activity
           </button>
           <button
             onClick={() => setActiveTab('worklogs')}
@@ -245,21 +329,13 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
           >
             Work Logs
           </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-              activeTab === 'history' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            History Timeline
-          </button>
         </div>
 
         {/* Content Panel */}
-        <div className="flex-1 flex flex-col md:flex-row overflow-y-auto min-h-0 bg-dark-900/40">
+        <div className="flex-1 flex flex-col md:flex-row min-h-0 bg-dark-900/40">
           {/* Main Body (Left) */}
-          <div className="flex-1 p-6 space-y-6 overflow-y-auto border-r border-slate-700/30">
-            {/* DETAILS & COMMENTS TAB */}
+          <div className="flex-1 p-6 space-y-6 border-r border-slate-700/30">
+            {/* DETAILS & ACTIVITY TAB */}
             {activeTab === 'details' && (
               <div className="space-y-6 animate-fade-in">
                 {/* Description */}
@@ -308,30 +384,49 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
                   )}
                 </div>
 
-                {/* Comments Log */}
+                {/* Activity & Comments Log */}
                 <div className="border-t border-slate-800 pt-6">
                   <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2 mb-4">
-                    <AiOutlineMessage size={16} /> Comments ({selectedTask.comments?.length || 0})
+                    <AiOutlineMessage size={16} /> Activity & Comments ({unifiedFeed.length})
                   </h3>
 
                   <div className="space-y-4 mb-4">
-                    {selectedTask.comments && selectedTask.comments.length > 0 ? (
-                      selectedTask.comments.map((comment) => (
-                        <div key={comment._id} className="flex gap-3 text-sm">
-                          <div className="w-8 h-8 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                            {comment.user?.name?.[0]?.toUpperCase() || 'U'}
-                          </div>
-                          <div className="flex-1 bg-dark-800/80 p-3 rounded-xl border border-slate-700/30">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="font-semibold text-white text-xs">{comment.user?.name}</span>
-                              <span className="text-[10px] text-slate-500">{formatRelativeTime(comment.createdAt)}</span>
+                    {unifiedFeed.length > 0 ? (
+                      unifiedFeed.map((item) => {
+                        if (item.feedType === 'comment') {
+                          return (
+                            <div key={item._id} className="flex gap-3 text-sm">
+                              <div className="w-8 h-8 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                                {item.user?.name?.[0]?.toUpperCase() || 'U'}
+                              </div>
+                              <div className="flex-1 bg-dark-800/80 p-3 rounded-xl border border-slate-700/30">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="font-semibold text-white text-xs">{item.user?.name}</span>
+                                  <span className="text-[10px] text-slate-500">{formatRelativeTime(item.createdAt)}</span>
+                                </div>
+                                <p className="text-slate-300 text-sm whitespace-pre-wrap">{item.text}</p>
+                              </div>
                             </div>
-                            <p className="text-slate-300 text-sm whitespace-pre-wrap">{comment.text}</p>
-                          </div>
-                        </div>
-                      ))
+                          )
+                        } else {
+                          return (
+                            <div key={item._id || `${item.timestamp}-${item.action}`} className="flex items-center gap-3 pl-2 text-xs py-1.5 bg-dark-900/30 rounded-lg p-2 border border-slate-800/40">
+                              <div className="w-6 h-6 rounded-full bg-dark-850 text-slate-400 flex items-center justify-center border border-slate-700/30 flex-shrink-0">
+                                {item.action === 'STATUS_CHANGE' && <AiOutlineHistory size={12} />}
+                                {item.action === 'ASSIGNEE_CHANGE' && <AiOutlineUser size={12} />}
+                                {item.action === 'DUE_DATE_CHANGE' && <AiOutlineCalendar size={12} />}
+                                {item.action !== 'STATUS_CHANGE' && item.action !== 'ASSIGNEE_CHANGE' && item.action !== 'DUE_DATE_CHANGE' && <AiOutlineHistory size={12} />}
+                              </div>
+                              <div className="flex-1 text-slate-400">
+                                {getHistoryMessage(item)}
+                                <span className="text-[9px] text-slate-500 ml-2">({formatRelativeTime(item.timestamp)})</span>
+                              </div>
+                            </div>
+                          )
+                        }
+                      })
                     ) : (
-                      <p className="text-xs text-slate-600 italic py-2">No comments yet. Start the conversation below!</p>
+                      <p className="text-xs text-slate-600 italic py-2">No activity or comments yet. Start the conversation below!</p>
                     )}
                   </div>
 
@@ -494,49 +589,10 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
                 </div>
               </div>
             )}
-
-            {/* HISTORY TIMELINE TAB */}
-            {activeTab === 'history' && (
-              <div className="space-y-6 animate-fade-in">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Task Activity Trail</h3>
-                {selectedTask.history && selectedTask.history.length > 0 ? (
-                  <div className="relative pl-6 space-y-6 border-l-2 border-slate-800 ml-3 py-1">
-                    {selectedTask.history.map((log, index) => (
-                      <div key={index} className="relative text-xs">
-                        {/* Dot on line */}
-                        <div className="absolute -left-[31px] top-1 w-2.5 h-2.5 rounded-full bg-primary-500 border border-dark-900 flex items-center justify-center flex-shrink-0" />
-                        
-                        <div className="bg-dark-800/40 p-3 rounded-lg border border-slate-800/50 space-y-1">
-                          <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            <span>{log.user?.name || 'System Actor'}</span>
-                            <span>{new Date(log.timestamp).toLocaleString()}</span>
-                          </div>
-                          <p className="text-slate-300 font-medium">
-                            Action: <span className="text-primary-400 capitalize font-bold">{log.action.replace(/_/g, ' ').toLowerCase()}</span>
-                          </p>
-                          {(log.previousValue !== undefined || log.newValue !== undefined) && (
-                            <div className="flex gap-2 items-center bg-dark-900/60 p-2 rounded mt-1 border border-slate-800/80 font-mono text-[10px] text-slate-400">
-                              <span className="text-red-400/80 line-through truncate max-w-[200px]">{String(log.previousValue || 'None')}</span>
-                              <span className="text-slate-500">→</span>
-                              <span className="text-green-400/80 font-bold truncate max-w-[200px]">{String(log.newValue || 'None')}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="card p-8 text-center text-slate-500 text-xs italic">
-                    <AiOutlineHistory size={24} className="mx-auto mb-2 text-slate-600" />
-                    No state modifications logged for this task.
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Sidebar Attributes (Right) */}
-          <div className="w-full md:w-80 p-6 bg-dark-800/20 space-y-5 flex flex-col justify-between overflow-y-auto flex-shrink-0">
+          <div className="w-full md:w-80 p-6 bg-dark-800/20 space-y-5 flex flex-col justify-between flex-shrink-0">
             <div className="space-y-4">
               {/* Status Selector */}
               <div>
@@ -577,10 +633,10 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
                 )}
               </div>
 
-              {/* Assignee Selector (Only Admin/PM can edit, Employees read-only) */}
+              {/* Assignee Selector (Admin/PM/Project Member can edit) */}
               <div>
                 <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Assignee</label>
-                {isAdmin || isPM ? (
+                {canEditAssigneeAndTimeline ? (
                   <select
                     value={selectedTask.assignedTo?._id || ''}
                     onChange={(e) => handleUpdate('assignedTo', e.target.value || null)}
@@ -589,8 +645,8 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
                   >
                     <option value="">Unassigned</option>
                     {projectMembers.map((member) => (
-                      <option key={member.user._id} value={member.user._id}>
-                        {member.user.name} ({member.role})
+                      <option key={member.user?._id || member.user} value={member.user?._id || member.user}>
+                        {member.user?.name || 'Unknown'} ({member.role})
                       </option>
                     ))}
                   </select>
@@ -604,12 +660,12 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
                 )}
               </div>
 
-              {/* Due Date Picker (Only Admin/PM can edit, Employees read-only) */}
+              {/* Due Date Picker (Admin/PM/Project Member can edit) */}
               <div>
                 <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   <AiOutlineCalendar size={14} /> Due Date
                 </label>
-                {isAdmin || isPM ? (
+                {canEditAssigneeAndTimeline ? (
                   <input
                     type="date"
                     value={selectedTask.dueDate ? selectedTask.dueDate.slice(0, 10) : ''}
@@ -632,8 +688,8 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
                   <input
                     type="number"
                     min="0"
-                    value={selectedTask.estimatedHours || ''}
-                    onChange={(e) => handleUpdate('estimatedHours', e.target.value ? Number(e.target.value) : null)}
+                    value={localHours}
+                    onChange={(e) => setLocalHours(e.target.value)}
                     placeholder="e.g. 5"
                     className="input text-sm bg-dark-800"
                   />
@@ -667,9 +723,8 @@ const TaskDetailModal = ({ isOpen, onClose }) => {
           </div>
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   )
 }
 
-export default TaskDetailModal
+export default TaskDetailPage

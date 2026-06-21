@@ -4,7 +4,7 @@ import { useRecoilValue } from 'recoil'
 import {
   AiOutlinePlus, AiOutlineArrowLeft, AiOutlineUser,
   AiOutlineUserAdd, AiOutlineCloseCircle, AiOutlineSearch,
-  AiOutlineEdit
+  AiOutlineEdit, AiOutlineAppstore, AiOutlineUnorderedList
 } from 'react-icons/ai'
 import { selectedProjectAtom } from '../../recoil/atoms/projectAtom'
 import useProjects from '../../hooks/useProjects'
@@ -13,7 +13,6 @@ import useAuth from '../../hooks/useAuth'
 import KanbanBoard from '../../components/task/KanbanBoard'
 import TaskForm from '../../components/task/TaskForm'
 import ProjectForm from '../../components/project/ProjectForm'
-import TaskDetailModal from '../../components/task/TaskDetailModal'
 import Modal from '../../components/common/Modal'
 import Button from '../../components/common/Button'
 import Badge from '../../components/common/Badge'
@@ -28,11 +27,16 @@ const ProjectDetailPage = () => {
   const project = useRecoilValue(selectedProjectAtom)
   const { user } = useAuth()
   const { fetchProjectById, updateProject, addMember, removeMember, loading: projLoading } = useProjects()
-  const { fetchTasks, createTask, loading: taskLoading, selectedTask, setSelectedTask } = useTasks()
+  const { tasks, fetchTasks, createTask, loading: taskLoading, selectedTask, setSelectedTask } = useTasks()
+
+  const handleTaskClick = (task) => {
+    navigate(`/tasks/${task._id}`)
+  }
 
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false)
+  const [viewMode, setViewMode] = useState('board')
 
   // Add Member state
   const [allUsers, setAllUsers] = useState([])
@@ -180,12 +184,83 @@ const ProjectDetailPage = () => {
 
       {/* Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start flex-1 min-h-0">
-        {/* Kanban Board (Spans 3 cols) */}
-        <div className="lg:col-span-3 min-h-0">
+        {/* Kanban Board / List View (Spans 3 cols) */}
+        <div className="lg:col-span-3 min-h-0 space-y-4">
+          <div className="flex justify-end">
+            <div className="flex bg-dark-800 border border-slate-700/50 rounded-lg p-0.5">
+              <button
+                onClick={() => setViewMode('board')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${viewMode === 'board' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                type="button"
+              >
+                <AiOutlineAppstore size={14} /> Board View
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${viewMode === 'list' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                type="button"
+              >
+                <AiOutlineUnorderedList size={14} /> List View
+              </button>
+            </div>
+          </div>
+
           {taskLoading ? (
             <div className="flex justify-center py-24"><Spinner size="lg" /></div>
+          ) : viewMode === 'board' ? (
+            <KanbanBoard onTaskClick={handleTaskClick} />
+          ) : tasks.length === 0 ? (
+            <div className="card p-12 text-center text-slate-500 font-medium">No tasks created for this project yet.</div>
           ) : (
-            <KanbanBoard onTaskClick={setSelectedTask} />
+            <div className="card overflow-hidden border border-slate-700/50 animate-fade-in">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-dark-800 border-b border-slate-700 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                      <th className="py-3 px-5">Task Title</th>
+                      <th className="py-3 px-5">Assignee</th>
+                      <th className="py-3 px-5">Status</th>
+                      <th className="py-3 px-5">Priority</th>
+                      <th className="py-3 px-5">Due Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800 text-xs text-slate-300">
+                    {tasks.map((task) => (
+                      <tr
+                        key={task._id}
+                        onClick={() => handleTaskClick(task)}
+                        className="hover:bg-dark-800/20 cursor-pointer transition-colors"
+                      >
+                        <td className="py-3.5 px-5 font-semibold text-white">
+                          {task.title}
+                        </td>
+                        <td className="py-3.5 px-5">
+                          {task.assignedTo ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-5 h-5 rounded-full bg-slate-700 font-bold text-slate-200 text-[10px] flex items-center justify-center">
+                                {task.assignedTo.name?.[0]?.toUpperCase() || 'U'}
+                              </div>
+                              <span>{task.assignedTo.name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-slate-500 italic">Unassigned</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-5">
+                          <Badge type="status" value={task.status} />
+                        </td>
+                        <td className="py-3.5 px-5">
+                          <Badge type="priority" value={task.priority} />
+                        </td>
+                        <td className="py-3.5 px-5 text-slate-400">
+                          {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </div>
 
@@ -289,9 +364,6 @@ const ProjectDetailPage = () => {
           onCancel={() => setIsTaskModalOpen(false)}
         />
       </Modal>
-
-      {/* Task Detail Modal */}
-      <TaskDetailModal isOpen={!!selectedTask} onClose={() => setSelectedTask(null)} />
 
       {/* Add / Manage Member Modal */}
       <Modal isOpen={isAddMemberOpen} onClose={() => setIsAddMemberOpen(false)} title="Manage Project Team">

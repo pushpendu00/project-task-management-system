@@ -3,11 +3,13 @@ import { AiOutlineCalendar, AiOutlineUser } from 'react-icons/ai'
 import Badge from '../common/Badge'
 import { formatDate } from '../../utils/formatDate'
 
-const TaskCard = ({ task, onClick }) => (
+const TaskCard = ({ task, onClick, onDragStart }) => (
   <div
+    draggable
+    onDragStart={(e) => onDragStart?.(e, task._id)}
     onClick={() => onClick?.(task)}
     className="card p-4 cursor-pointer hover:border-slate-600 transition-all duration-200
-               hover:shadow-lg hover:shadow-primary-900/10 animate-fade-in group"
+               hover:shadow-lg hover:shadow-primary-900/10 animate-fade-in group select-none"
     id={`task-card-${task._id}`}
   >
     <div className="flex items-start gap-2 mb-2">

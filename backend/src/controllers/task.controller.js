@@ -77,7 +77,8 @@ const getTaskById = async (req, res) => {
         select: 'name description owner assignedManager members',
         populate: [
           { path: 'assignedManager', select: 'name email' },
-          { path: 'owner', select: 'name email' }
+          { path: 'owner', select: 'name email' },
+          { path: 'members.user', select: 'name email' }
         ]
       })
       .populate('comments.user', 'name email avatar')
@@ -202,19 +203,21 @@ const updateTask = async (req, res) => {
     const isManagerInTeam = project.members?.some(m => m.user.toString() === req.user._id.toString() && m.role === 'manager');
     const isPM = isOwner || isAssignedPM || isManagerInTeam;
 
-    const isAssignee = task.assignedTo?.toString() === req.user._id.toString();
+    const isProjectMember = project.members?.some(m => m.user.toString() === req.user._id.toString());
+    const isMemberOrStaff = isAdmin || isPM || isProjectMember || task.assignedTo?.toString() === req.user._id.toString();
 
     // Check update permissions
-    if (!isAdmin && !isPM && !isAssignee) {
+    if (!isMemberOrStaff) {
       return res.status(403).json({ success: false, message: 'Not authorized to update this task' });
     }
 
-    // Employees (Members) can ONLY update status
-    if (!isAdmin && !isPM && isAssignee) {
+    // Standard members (non-PM/Admin) can ONLY update status, assignee, and timeline (dueDate)
+    if (!isAdmin && !isPM) {
+      const allowedKeys = ['status', 'assignedTo', 'dueDate'];
       const keys = Object.keys(req.body);
-      const isOnlyStatus = keys.every(k => k === 'status');
-      if (!isOnlyStatus) {
-        return res.status(403).json({ success: false, message: 'Employees can only modify the status of their assigned tasks.' });
+      const isAllowed = keys.every(k => allowedKeys.includes(k));
+      if (!isAllowed) {
+        return res.status(403).json({ success: false, message: 'Project members can only modify task status, assignee, and timeline.' });
       }
     }
 
@@ -232,16 +235,25 @@ const updateTask = async (req, res) => {
       });
     }
 
-    // Track assignee changes
+    // Track assignee changes with names instead of IDs
     if (req.body.assignedTo !== undefined && req.body.assignedTo !== (task.assignedTo ? task.assignedTo.toString() : '')) {
-      const prevAssigneeId = task.assignedTo ? task.assignedTo.toString() : 'Unassigned';
-      const newAssigneeId = req.body.assignedTo || 'Unassigned';
+      const User = require('../models/user.model');
+      let prevAssigneeName = 'Unassigned';
+      if (task.assignedTo) {
+        const prevUser = await User.findById(task.assignedTo);
+        if (prevUser) prevAssigneeName = prevUser.name;
+      }
+      let newAssigneeName = 'Unassigned';
+      if (req.body.assignedTo) {
+        const newUser = await User.findById(req.body.assignedTo);
+        if (newUser) newAssigneeName = newUser.name;
+      }
 
       historyEntries.push({
         user: req.user._id,
         action: 'ASSIGNEE_CHANGE',
-        previousValue: prevAssigneeId,
-        newValue: newAssigneeId,
+        previousValue: prevAssigneeName,
+        newValue: newAssigneeName,
         timestamp: new Date()
       });
 
@@ -271,6 +283,21 @@ const updateTask = async (req, res) => {
       }
     }
 
+    // Track due date (timeline) changes
+    if (req.body.dueDate !== undefined) {
+      const prevDateStr = task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : 'None';
+      const newDateStr = req.body.dueDate ? new Date(req.body.dueDate).toISOString().slice(0, 10) : 'None';
+      if (prevDateStr !== newDateStr) {
+        historyEntries.push({
+          user: req.user._id,
+          action: 'DUE_DATE_CHANGE',
+          previousValue: prevDateStr,
+          newValue: newDateStr,
+          timestamp: new Date()
+        });
+      }
+    }
+
     // Append to task history
     if (historyEntries.length > 0) {
       task.history.push(...historyEntries);
@@ -283,7 +310,17 @@ const updateTask = async (req, res) => {
     const updatedTask = await Task.findById(req.params.id)
       .populate('assignedTo', 'name email avatar')
       .populate('createdBy', 'name email avatar')
-      .populate('project', 'name');
+      .populate({
+        path: 'project',
+        select: 'name description owner assignedManager members',
+        populate: [
+          { path: 'assignedManager', select: 'name email' },
+          { path: 'owner', select: 'name email' },
+          { path: 'members.user', select: 'name email' }
+        ]
+      })
+      .populate('comments.user', 'name email avatar')
+      .populate('history.user', 'name email');
 
     // Audit log
     await logAction({
@@ -366,7 +403,15 @@ const addComment = async (req, res) => {
       .populate('createdBy', 'name email avatar')
       .populate('comments.user', 'name email avatar')
       .populate('history.user', 'name email')
-      .populate('project', 'name');
+      .populate({
+        path: 'project',
+        select: 'name description owner assignedManager members',
+        populate: [
+          { path: 'assignedManager', select: 'name email' },
+          { path: 'owner', select: 'name email' },
+          { path: 'members.user', select: 'name email' }
+        ]
+      });
 
     // Audit log for comment submission
     await logAction({
