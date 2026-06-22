@@ -460,7 +460,10 @@ const addComment = async (req, res) => {
       text: req.body.text || '',
       attachmentUrl: req.body.attachmentUrl,
       attachmentName: req.body.attachmentName,
-      attachmentType: req.body.attachmentType
+      attachmentType: req.body.attachmentType,
+      replyTo: req.body.replyTo || null,
+      replyToUser: req.body.replyToUser || null,
+      replyToText: req.body.replyToText || null,
     });
     await task.save();
     

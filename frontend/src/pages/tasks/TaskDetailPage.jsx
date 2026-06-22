@@ -114,9 +114,12 @@ const TaskDetailPage = () => {
   const [addingComment, setAddingComment] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null) // { url, name, type, size }
   const [uploadingFile, setUploadingFile] = useState(false)
-  const fileInputRef = useRef(null)
-  const chatEndRef = useRef(null)
   const [feedFilter, setFeedFilter] = useState('all') // 'all', 'messages', 'status'
+  const [replyingTo, setReplyingTo] = useState(null)
+  const chatContainerRef = useRef(null)
+  const chatEndRef = useRef(null)
+  const fileInputRef = useRef(null)
+  const [showScrollBottom, setShowScrollBottom] = useState(false)
 
   // Work Logs
   const [workLogs, setWorkLogs] = useState([])
@@ -181,6 +184,12 @@ const TaskDetailPage = () => {
       return () => clearTimeout(delayDebounce)
     }
   }, [localHours]) // eslint-disable-line
+
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target
+    const isScrolledUp = scrollHeight - scrollTop - clientHeight > 100
+    setShowScrollBottom(isScrolledUp)
+  }
 
   const fetchWorkLogs = async () => {
     if (!id) return
@@ -252,11 +261,15 @@ const TaskDetailPage = () => {
         text: newComment,
         attachmentUrl: selectedFile?.url || null,
         attachmentName: selectedFile?.name || null,
-        attachmentType: selectedFile?.type || null
+        attachmentType: selectedFile?.type || null,
+        replyTo: replyingTo?._id || null,
+        replyToUser: replyingTo?.userName || null,
+        replyToText: replyingTo ? (replyingTo.text || replyingTo.attachmentName || 'Attachment') : null
       }
       await addComment(id, commentPayload)
       setNewComment('')
       setSelectedFile(null)
+      setReplyingTo(null)
     } finally {
       setAddingComment(false)
     }
@@ -349,10 +362,27 @@ const TaskDetailPage = () => {
     return true
   })
 
-  // Auto-scroll chat to bottom when activity feed updates
+  const lastFeedLength = useRef(filteredFeed.length)
+
+  // Auto-scroll chat to bottom when activity feed updates or tab changes
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [filteredFeed.length])
+    if (activeTab === 'details') {
+      const isNewMessage = filteredFeed.length !== lastFeedLength.current
+      lastFeedLength.current = filteredFeed.length
+      
+      const timer = setTimeout(() => {
+        if (isNewMessage) {
+          chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+        } else {
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+          }
+        }
+      }, 50)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [filteredFeed.length, activeTab])
 
   if (!selectedTask) {
     return (
@@ -458,77 +488,161 @@ const TaskDetailPage = () => {
                   </select>
                 </div>
 
-                {/* Scrolling Chat list */}
-                <div className="flex-1 overflow-y-auto space-y-2 pr-1.5 bg-dark-950/20 rounded-lg p-2.5 border border-slate-800/40 min-h-[160px]">
-                  {filteredFeed.length > 0 ? (
-                    filteredFeed.map((item) => {
-                      if (item.feedType === 'comment') {
-                        const isCurrentUser = item.user?._id?.toString() === user?._id?.toString();
-                        return (
-                          <div key={item._id} className={`flex gap-2 max-w-[85%] ${isCurrentUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}>
-                            <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-[9px] flex-shrink-0">
-                              {item.user?.name?.[0]?.toUpperCase() || 'U'}
-                            </div>
-                            <div className={`p-2 rounded-lg border ${
-                              isCurrentUser 
-                                ? 'bg-primary-900 border-primary-700/50 text-slate-100 rounded-tr-none' 
-                                : 'bg-dark-800/80 border-slate-700/30 text-slate-300 rounded-tl-none'
-                            }`}>
-                              <div className="flex items-center justify-between gap-3 mb-0.5">
-                                <span className="font-bold text-[10px] text-slate-300">{item.user?.name}</span>
-                                <span className="text-[8px] text-slate-500">{formatRelativeTime(item.createdAt)}</span>
-                              </div>
-                              {item.text && <p className="text-[11px] whitespace-pre-wrap leading-relaxed">{item.text}</p>}
-                              {item.attachmentUrl && (
-                                <div className="mt-1.5">
-                                  {item.attachmentType?.startsWith('image/') ? (
-                                    <a
-                                      href={getAttachmentUrl(item.attachmentUrl)}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="block max-w-[200px] overflow-hidden rounded border border-slate-700/50 hover:opacity-90 transition-opacity"
+                {/* Scrolling Chat list wrapper */}
+                <div className="flex-1 min-h-0 relative flex flex-col">
+                  <div 
+                    ref={chatContainerRef}
+                    onScroll={handleScroll}
+                    className="flex-1 overflow-y-auto space-y-2 pr-1.5 bg-dark-950/20 rounded-lg p-2.5 border border-slate-800/40 min-h-[160px]"
+                  >
+                    {filteredFeed.length > 0 ? (
+                      filteredFeed.map((item) => {
+                        if (item.feedType === 'comment') {
+                          const isCurrentUser = item.user?._id?.toString() === user?._id?.toString();
+                          return (
+                            <div 
+                              key={item._id} 
+                              id={`comment-row-${item._id}`} 
+                              className="w-full transition-all duration-500 rounded p-1"
+                            >
+                              <div className={`flex items-center gap-2 group max-w-[85%] ${isCurrentUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}>
+                                <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-[9px] flex-shrink-0">
+                                  {item.user?.name?.[0]?.toUpperCase() || 'U'}
+                                </div>
+                                <div 
+                                  id={`comment-${item._id}`}
+                                  className={`p-2 rounded-lg border transition-all duration-350 ${
+                                    isCurrentUser 
+                                      ? 'bg-primary-900 border-primary-700/50 text-slate-100 rounded-tr-none' 
+                                      : 'bg-dark-800/80 border-slate-700/30 text-slate-300 rounded-tl-none'
+                                  }`}
+                                >
+                                  {item.replyTo && (
+                                    <div 
+                                      onClick={() => {
+                                        const element = document.getElementById(`comment-row-${item.replyTo}`);
+                                        if (element) {
+                                          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                          element.classList.add('bg-primary-600/20');
+                                          setTimeout(() => {
+                                            element.classList.remove('bg-primary-600/20');
+                                          }, 3000);
+                                        }
+                                      }}
+                                      className="mb-1.5 p-1.5 rounded bg-dark-950/40 border-l-2 border-primary-500 text-[10px] text-slate-400 hover:bg-dark-950/60 cursor-pointer transition-colors max-w-full"
                                     >
-                                      <img
-                                        src={getAttachmentUrl(item.attachmentUrl)}
-                                        alt={item.attachmentName}
-                                        className="max-h-[120px] object-cover"
-                                      />
-                                    </a>
-                                  ) : (
-                                    <a
-                                      href={getAttachmentUrl(item.attachmentUrl)}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1.5 bg-dark-900/60 hover:bg-dark-950 p-1 px-2 rounded border border-slate-800/80 text-[10px] text-primary-400 hover:text-primary-350 transition-colors font-medium max-w-full"
-                                    >
-                                      <AiOutlinePaperClip size={11} className="flex-shrink-0" />
-                                      <span className="truncate max-w-[120px]">{item.attachmentName || 'Attachment'}</span>
-                                    </a>
+                                      <div className="font-bold text-[8px] text-primary-400">@{item.replyToUser}</div>
+                                      <div className="truncate text-slate-450 max-w-[180px] text-[9px] mt-0.5">
+                                        {item.replyToText}
+                                      </div>
+                                    </div>
+                                  )}
+                                  <div className="flex items-center justify-between gap-3 mb-0.5">
+                                    <span className="font-bold text-[10px] text-slate-300">{item.user?.name}</span>
+                                    <span className="text-[8px] text-slate-500">{formatRelativeTime(item.createdAt)}</span>
+                                  </div>
+                                  {item.text && <p className="text-[11px] whitespace-pre-wrap leading-relaxed">{item.text}</p>}
+                                  {item.attachmentUrl && (
+                                    <div className="mt-1.5">
+                                      {item.attachmentType?.startsWith('image/') ? (
+                                        <a
+                                          href={getAttachmentUrl(item.attachmentUrl)}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="block max-w-[200px] overflow-hidden rounded border border-slate-700/50 hover:opacity-90 transition-opacity"
+                                        >
+                                          <img
+                                            src={getAttachmentUrl(item.attachmentUrl)}
+                                            alt={item.attachmentName}
+                                            className="max-h-[120px] object-cover"
+                                          />
+                                        </a>
+                                      ) : (
+                                        <a
+                                          href={getAttachmentUrl(item.attachmentUrl)}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1.5 bg-dark-900/60 hover:bg-dark-950 p-1 px-2 rounded border border-slate-800/80 text-[10px] text-primary-400 hover:text-primary-350 transition-colors font-medium max-w-full"
+                                        >
+                                          <AiOutlinePaperClip size={11} className="flex-shrink-0" />
+                                          <span className="truncate max-w-[120px]">{item.attachmentName || 'Attachment'}</span>
+                                        </a>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
-                              )}
+  
+                                {/* Reply Action Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => setReplyingTo({
+                                    _id: item._id,
+                                    userName: item.user?.name || 'Unknown',
+                                    text: item.text,
+                                    attachmentUrl: item.attachmentUrl,
+                                    attachmentName: item.attachmentName
+                                  })}
+                                  className="p-1 rounded bg-slate-800/40 hover:bg-slate-700 border border-slate-700/40 text-slate-400 hover:text-white transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center flex-shrink-0"
+                                  title="Reply"
+                                >
+                                  <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="w-2.5 h-2.5" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                                  </svg>
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        )
-                      } else {
-                        return (
-                          <div key={item._id || `${item.timestamp}-${item.action}`} className="flex items-center justify-center py-0.5 text-[9px] text-slate-500 mx-auto max-w-[90%] text-center">
-                            <span className="bg-dark-900 border border-slate-800/60 rounded-full px-2.5 py-0.5 leading-snug">
-                              {getHistoryMessage(item)}
-                            </span>
-                          </div>
-                        )
-                      }
-                    })
-                  ) : (
-                    <p className="text-[10px] text-slate-600 italic py-4 text-center">No activity or comments yet. Type a message below!</p>
+                          )
+                        } else {
+                          return (
+                            <div key={item._id || `${item.timestamp}-${item.action}`} className="flex items-center justify-center py-0.5 text-[9px] text-slate-500 mx-auto max-w-[90%] text-center">
+                              <span className="bg-dark-900 border border-slate-800/60 rounded-full px-2.5 py-0.5 leading-snug">
+                                {getHistoryMessage(item)}
+                              </span>
+                            </div>
+                          )
+                        }
+                      })
+                    ) : (
+                      <p className="text-[10px] text-slate-600 italic py-4 text-center">No activity or comments yet. Type a message below!</p>
+                    )}
+                    {/* Scroll Anchor */}
+                    <div ref={chatEndRef} />
+                  </div>
+
+                  {/* Floating Jump to Bottom Button */}
+                  {showScrollBottom && (
+                    <button
+                      type="button"
+                      onClick={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                      className="absolute bottom-4 right-4 p-1.5 rounded-full bg-primary-600 hover:bg-primary-500 border border-primary-500/30 text-white shadow-lg flex items-center justify-center animate-bounce z-10"
+                      title="Jump to bottom"
+                    >
+                      <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" className="w-3.5 h-3.5" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 13l-7 7-7-7m14-6l-7 7-7-7"></path>
+                      </svg>
+                    </button>
                   )}
-                  {/* Scroll Anchor */}
-                  <div ref={chatEndRef} />
                 </div>
 
                 {/* Add Comment Input at bottom */}
                 <div className="flex flex-col flex-shrink-0 bg-dark-900/60 p-2 rounded-lg border border-slate-800 space-y-1">
+                  {replyingTo && (
+                    <div className="flex items-start justify-between bg-dark-850 border-l-4 border-primary-500 p-1.5 px-3 rounded text-[10px] text-slate-350 w-full mb-1">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-[9px] text-primary-400">Replying to {replyingTo.userName}</div>
+                        <div className="truncate text-slate-450 text-[9px] mt-0.5">
+                          {replyingTo.text || (replyingTo.attachmentName ? `📎 ${replyingTo.attachmentName}` : 'Attachment')}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setReplyingTo(null)}
+                        className="text-slate-500 hover:text-white transition-colors ml-2 self-center"
+                      >
+                        <AiOutlineClose size={12} />
+                      </button>
+                    </div>
+                  )}
                   {selectedFile && (
                     <div className="flex items-center justify-between bg-dark-850 border border-slate-800 p-1.5 px-3 rounded text-[10px] text-slate-350 w-full mb-1">
                       <div className="flex items-center gap-1.5 min-w-0">
