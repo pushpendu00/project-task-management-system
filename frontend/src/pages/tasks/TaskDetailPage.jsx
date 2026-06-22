@@ -17,6 +17,7 @@ import api from '../../api/axios'
 import toast from 'react-hot-toast'
 import { formatDate, formatRelativeTime } from '../../utils/formatDate'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import { useSocket } from '../../context/SocketContext'
 
 const getHistoryMessage = (log) => {
   const userName = log.user?.name || 'System Actor'
@@ -49,6 +50,32 @@ const getHistoryMessage = (log) => {
           <span className="text-primary-400 font-bold">{newVal}</span>
         </span>
       )
+    case 'TITLE_CHANGE':
+      return (
+        <span>
+          <strong className="text-slate-300">{userName}</strong> updated title from <span className="text-slate-400 line-through">"{prevVal}"</span> to <strong className="text-slate-100">"{newVal}"</strong>
+        </span>
+      )
+    case 'DESCRIPTION_CHANGE':
+      return (
+        <span>
+          <strong className="text-slate-300">{userName}</strong> updated description
+        </span>
+      )
+    case 'PRIORITY_CHANGE':
+      return (
+        <span>
+          <strong className="text-slate-300">{userName}</strong> updated priority from{' '}
+          <span className="text-red-400 bg-red-950/20 px-1.5 py-0.5 rounded text-[10px] font-mono capitalize">{prevVal}</span> to{' '}
+          <span className="text-green-400 bg-green-950/20 px-1.5 py-0.5 rounded text-[10px] font-mono capitalize">{newVal}</span>
+        </span>
+      )
+    case 'ESTIMATED_HOURS_CHANGE':
+      return (
+        <span>
+          <strong className="text-slate-300">{userName}</strong> updated estimated effort from <span className="text-slate-400 font-mono">{prevVal}h</span> to <strong className="text-slate-100 font-mono">{newVal}h</strong>
+        </span>
+      )
     default:
       return (
         <span>
@@ -72,6 +99,7 @@ const TaskDetailPage = () => {
   const [selectedTask, setSelectedTask] = useRecoilState(selectedTaskAtom)
   const { fetchTaskById, updateTask, deleteTask, addComment, loading: taskLoading } = useTasks()
   const { user } = useAuth()
+  const socket = useSocket()
 
   const [searchParams, setSearchParams] = useSearchParams()
   const activeTab = searchParams.get('tab') || 'details'
@@ -87,6 +115,8 @@ const TaskDetailPage = () => {
   const [selectedFile, setSelectedFile] = useState(null) // { url, name, type, size }
   const [uploadingFile, setUploadingFile] = useState(false)
   const fileInputRef = useRef(null)
+  const chatEndRef = useRef(null)
+  const [feedFilter, setFeedFilter] = useState('all') // 'all', 'messages', 'status'
 
   // Work Logs
   const [workLogs, setWorkLogs] = useState([])
@@ -115,7 +145,26 @@ const TaskDetailPage = () => {
     }
   }, [id]) // eslint-disable-line
 
-  // Synchronize local hours with selectedTask.estimatedHours when it changes externally
+  // Socket.io room management and event listeners
+  useEffect(() => {
+    if (id && socket) {
+      socket.emit('join_task', id)
+
+      const handleSocketEvent = ({ type, data }) => {
+        if (type === 'worklog_update' && data.taskId === id) {
+          fetchWorkLogs()
+        }
+      }
+
+      socket.on('event', handleSocketEvent)
+
+      return () => {
+        socket.emit('leave_task', id)
+        socket.off('event', handleSocketEvent)
+      }
+    }
+  }, [id, socket]) // eslint-disable-line
+
   useEffect(() => {
     if (selectedTask?.estimatedHours !== undefined) {
       setLocalHours(selectedTask.estimatedHours || '')
@@ -275,6 +324,36 @@ const TaskDetailPage = () => {
     }
   }
 
+  // Combine comments and history into a unified activity feed
+  const unifiedFeed = selectedTask ? [
+    ...(selectedTask.comments || []).map((c) => ({
+      ...c,
+      feedType: 'comment',
+      date: new Date(c.createdAt),
+    })),
+    ...(selectedTask.history || []).map((h) => ({
+      ...h,
+      feedType: 'history',
+      date: new Date(h.timestamp),
+    })),
+  ].sort((a, b) => a.date - b.date) : []
+
+  // Filter the unified activity feed based on selected option
+  const filteredFeed = unifiedFeed.filter((item) => {
+    if (feedFilter === 'messages') {
+      return item.feedType === 'comment'
+    }
+    if (feedFilter === 'status') {
+      return item.feedType === 'history'
+    }
+    return true
+  })
+
+  // Auto-scroll chat to bottom when activity feed updates
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [filteredFeed.length])
+
   if (!selectedTask) {
     return (
       <div className="flex justify-center py-24"><Spinner size="lg" /></div>
@@ -293,20 +372,6 @@ const TaskDetailPage = () => {
   const canEditAssigneeAndTimeline = isAdmin || isPM || isProjectMember
 
   const totalLoggedHours = workLogs.reduce((sum, log) => sum + log.hoursWorked, 0)
-
-  // Combine comments and history into a unified activity feed
-  const unifiedFeed = [
-    ...(selectedTask.comments || []).map((c) => ({
-      ...c,
-      feedType: 'comment',
-      date: new Date(c.createdAt),
-    })),
-    ...(selectedTask.history || []).map((h) => ({
-      ...h,
-      feedType: 'history',
-      date: new Date(h.timestamp),
-    })),
-  ].sort((a, b) => a.date - b.date)
 
   return (
     <div className="animate-fade-in flex flex-col text-xs" style={{ height: 'calc(100vh - 7.5rem)' }}>
@@ -377,14 +442,26 @@ const TaskDetailPage = () => {
             {/* DETAILS & ACTIVITY TAB */}
             {activeTab === 'details' && (
               <div className="flex-1 flex flex-col min-h-0 space-y-2 animate-fade-in">
-                <h3 className="text-xs font-semibold text-slate-300 flex items-center gap-1.5 flex-shrink-0">
-                  <AiOutlineMessage size={14} /> Activity & Chat ({unifiedFeed.length})
-                </h3>
+                <div className="flex items-center justify-between flex-shrink-0">
+                  <h3 className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <AiOutlineMessage size={14} /> Activity & Chat ({filteredFeed.length})
+                  </h3>
+                  <select
+                    value={feedFilter}
+                    onChange={(e) => setFeedFilter(e.target.value)}
+                    className="bg-dark-800 border border-slate-700/60 rounded px-2 py-0.5 text-[10px] text-slate-350 focus:outline-none hover:border-primary-500 transition-colors cursor-pointer"
+                    id="chat-feed-filter"
+                  >
+                    <option value="all">All Activity</option>
+                    <option value="messages">Only Messages</option>
+                    <option value="status">Only Status Change</option>
+                  </select>
+                </div>
 
                 {/* Scrolling Chat list */}
                 <div className="flex-1 overflow-y-auto space-y-2 pr-1.5 bg-dark-950/20 rounded-lg p-2.5 border border-slate-800/40 min-h-[160px]">
-                  {unifiedFeed.length > 0 ? (
-                    unifiedFeed.map((item) => {
+                  {filteredFeed.length > 0 ? (
+                    filteredFeed.map((item) => {
                       if (item.feedType === 'comment') {
                         const isCurrentUser = item.user?._id?.toString() === user?._id?.toString();
                         return (
@@ -446,6 +523,8 @@ const TaskDetailPage = () => {
                   ) : (
                     <p className="text-[10px] text-slate-600 italic py-4 text-center">No activity or comments yet. Type a message below!</p>
                   )}
+                  {/* Scroll Anchor */}
+                  <div ref={chatEndRef} />
                 </div>
 
                 {/* Add Comment Input at bottom */}

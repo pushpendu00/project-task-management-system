@@ -19,35 +19,10 @@ const Layout = ({ children }) => {
 
   const unreadCount = notifications.filter(n => !n.isRead).length
 
-  // Set up Server-Sent Events for real-time notifications
+  // Fetch initial list of notifications
   useEffect(() => {
-    if (!token || !user) return
-
-    // Fetch initial list of notifications
-    fetchNotifications()
-
-    // Establish Server-Sent Events stream
-    const eventSourceUrl = `${api.defaults.baseURL || '/api'}/notifications/stream?token=${token}`
-    const eventSource = new EventSource(eventSourceUrl)
-
-    eventSource.onmessage = (event) => {
-      try {
-        const newNotification = JSON.parse(event.data)
-        // Add to recoil notifications state
-        setNotifications((prev) => [newNotification, ...prev])
-        // Trigger toast alert
-        toast(newNotification.message, { icon: '🔔', duration: 4000 })
-      } catch (err) {
-        console.error('Failed to parse SSE notification:', err)
-      }
-    }
-
-    eventSource.onerror = (err) => {
-      console.error('EventSource connection error, reconnecting...', err)
-    }
-
-    return () => {
-      eventSource.close()
+    if (token && user) {
+      fetchNotifications()
     }
   }, [token, user]) // eslint-disable-line
 

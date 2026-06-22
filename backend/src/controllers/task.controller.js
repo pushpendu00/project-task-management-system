@@ -301,6 +301,52 @@ const updateTask = async (req, res) => {
       }
     }
 
+    // Track title changes
+    if (req.body.title !== undefined && req.body.title !== task.title) {
+      historyEntries.push({
+        user: req.user._id,
+        action: 'TITLE_CHANGE',
+        previousValue: task.title,
+        newValue: req.body.title,
+        timestamp: new Date()
+      });
+    }
+
+    // Track description changes
+    if (req.body.description !== undefined && req.body.description !== task.description) {
+      const prevDesc = task.description ? (task.description.length > 25 ? task.description.slice(0, 25) + '...' : task.description) : 'None';
+      const newDesc = req.body.description ? (req.body.description.length > 25 ? req.body.description.slice(0, 25) + '...' : req.body.description) : 'None';
+      historyEntries.push({
+        user: req.user._id,
+        action: 'DESCRIPTION_CHANGE',
+        previousValue: prevDesc,
+        newValue: newDesc,
+        timestamp: new Date()
+      });
+    }
+
+    // Track priority changes
+    if (req.body.priority !== undefined && req.body.priority !== task.priority) {
+      historyEntries.push({
+        user: req.user._id,
+        action: 'PRIORITY_CHANGE',
+        previousValue: task.priority,
+        newValue: req.body.priority,
+        timestamp: new Date()
+      });
+    }
+
+    // Track estimated hours changes
+    if (req.body.estimatedHours !== undefined && req.body.estimatedHours !== task.estimatedHours) {
+      historyEntries.push({
+        user: req.user._id,
+        action: 'ESTIMATED_HOURS_CHANGE',
+        previousValue: task.estimatedHours ? task.estimatedHours.toString() : 'None',
+        newValue: req.body.estimatedHours ? req.body.estimatedHours.toString() : 'None',
+        timestamp: new Date()
+      });
+    }
+
     // Append to task history
     if (historyEntries.length > 0) {
       task.history.push(...historyEntries);
@@ -334,6 +380,17 @@ const updateTask = async (req, res) => {
       previousValue,
       newValue: updatedTask.toJSON(),
     });
+
+    // Emit real-time task update event
+    try {
+      const { sendToTask } = require('../utils/socket');
+      sendToTask(task._id.toString(), 'task_update', {
+        taskId: task._id,
+        task: updatedTask,
+      });
+    } catch (socketErr) {
+      console.error('Socket error emitting task update:', socketErr);
+    }
 
     res.status(200).json({ success: true, task: updatedTask });
   } catch (error) {
@@ -435,6 +492,18 @@ const addComment = async (req, res) => {
         attachmentType: req.body.attachmentType
       },
     });
+
+    // Emit real-time comment event
+    try {
+      const { sendToTask } = require('../utils/socket');
+      sendToTask(task._id.toString(), 'message', {
+        taskId: task._id,
+        comment: updated.comments[updated.comments.length - 1],
+        task: { project: updated.project }
+      });
+    } catch (socketErr) {
+      console.error('Socket error emitting comment:', socketErr);
+    }
 
     res.status(200).json({ success: true, task: updated });
   } catch (error) {

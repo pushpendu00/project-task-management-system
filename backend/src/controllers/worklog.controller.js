@@ -59,6 +59,14 @@ const submitWorkLog = async (req, res) => {
       newValue: workLog.toJSON(),
     });
 
+    // Emit real-time worklog submit event
+    try {
+      const { sendToTask } = require('../utils/socket');
+      sendToTask(taskId.toString(), 'worklog_update', { taskId });
+    } catch (socketErr) {
+      console.error('Socket error emitting worklog submit:', socketErr);
+    }
+
     res.status(201).json({ success: true, workLog });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -141,6 +149,14 @@ const replyToWorkLog = async (req, res) => {
       previousValue,
       newValue: { repliesCount: workLog.replies.length, lastReply: text },
     });
+
+    // Emit real-time worklog reply event
+    try {
+      const { sendToTask } = require('../utils/socket');
+      sendToTask(task._id.toString(), 'worklog_update', { taskId: task._id });
+    } catch (socketErr) {
+      console.error('Socket error emitting worklog reply:', socketErr);
+    }
 
     res.status(200).json({ success: true, workLog });
   } catch (error) {
