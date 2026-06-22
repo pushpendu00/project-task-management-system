@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import Input from '../common/Input'
 import Button from '../common/Button'
 import api from '../../api/axios'
+import Select from '../common/Select'
 
 const STATUS_OPTIONS   = ['todo', 'in-progress', 'in-review', 'completed', 'blocked']
 const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'critical']
@@ -81,11 +82,18 @@ const TaskForm = ({ initialData = {}, projectId, members = [], onSubmit, loading
     <form onSubmit={handleSubmit} className="space-y-4" id="task-form">
       {!projectId && !initialData._id && (
         <div>
-          <label className="label">Project *</label>
-          <select name="project" value={form.project} onChange={handleChange} className="input" id="task-project-select" required>
+          <Select
+            label="Project *"
+            name="project"
+            value={form.project}
+            onChange={handleChange}
+            className="w-full"
+            buttonClassName="py-2.5 px-3 bg-dark-900 border border-slate-700 rounded-lg text-slate-200 text-xs w-full text-left"
+            id="task-project-select"
+          >
             <option value="">Select Project</option>
             {projects.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
-          </select>
+          </Select>
           {errors.project && <p className="text-red-500 text-xs mt-1">{errors.project}</p>}
         </div>
       )}
@@ -98,27 +106,48 @@ const TaskForm = ({ initialData = {}, projectId, members = [], onSubmit, loading
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="label">Status</label>
-          <select name="status" value={form.status} onChange={handleChange} className="input" id="task-status">
+          <Select
+            label="Status"
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            className="w-full"
+            buttonClassName="py-2.5 px-3 bg-dark-900 border border-slate-700 rounded-lg text-slate-200 text-xs w-full text-left"
+            id="task-status"
+          >
             {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace(/-/g, ' ')}</option>)}
-          </select>
+          </Select>
         </div>
         <div>
-          <label className="label">Priority</label>
-          <select name="priority" value={form.priority} onChange={handleChange} className="input" id="task-priority">
+          <Select
+            label="Priority"
+            name="priority"
+            value={form.priority}
+            onChange={handleChange}
+            className="w-full"
+            buttonClassName="py-2.5 px-3 bg-dark-900 border border-slate-700 rounded-lg text-slate-200 text-xs w-full text-left"
+            id="task-priority"
+          >
             {PRIORITY_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-          </select>
+          </Select>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="label">Assign To {loadingMembers && <span className="text-xs text-slate-500 font-normal">(loading...)</span>}</label>
-          <select name="assignedTo" value={form.assignedTo} onChange={handleChange} className="input" id="task-assigned-to">
+          <Select
+            label={`Assign To ${loadingMembers ? '(loading...)' : ''}`}
+            name="assignedTo"
+            value={form.assignedTo}
+            onChange={handleChange}
+            className="w-full"
+            buttonClassName="py-2.5 px-3 bg-dark-900 border border-slate-700 rounded-lg text-slate-200 text-xs w-full text-left"
+            id="task-assigned-to"
+          >
             <option value="">Unassigned</option>
             {projectMembers.map((m) => (
-              <option key={m.user?._id || m.user} value={m.user?._id || m.user}>{m.user?.name || 'Unknown'}</option>
+              <option key={m.user?._id || m.user} value={m.user?._id || m.user} avatar={m.user?.avatar} name={m.user?.name}>{m.user?.name || 'Unknown'}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <Input id="task-due-date" label="Due Date" name="dueDate" type="date" value={form.dueDate} onChange={handleChange} />
       </div>

@@ -7,6 +7,7 @@ import Input from '../../components/common/Input'
 import Modal from '../../components/common/Modal'
 import Spinner from '../../components/common/Spinner'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import Select from '../../components/common/Select'
 import { getInitials } from '../../utils/getInitials'
 
 const getAvatarUrl = (path) => {
@@ -292,20 +293,34 @@ const UsersPage = () => {
           />
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="label">System Role</label>
-              <select name="role" value={form.role} onChange={handleInputChange} className="input" id="user-role-select">
+              <Select
+                label="System Role"
+                name="role"
+                value={form.role}
+                onChange={handleInputChange}
+                className="w-full"
+                buttonClassName="py-2.5 px-3 bg-dark-900 border border-slate-700 rounded-lg text-slate-200 text-xs w-full"
+                id="user-role-select"
+              >
                 <option value="member">Employee</option>
                 <option value="manager">Project Manager</option>
                 <option value="admin">System Admin</option>
-              </select>
+              </Select>
             </div>
             {editingUser && (
               <div>
-                <label className="label">Status</label>
-                <select name="isActive" value={String(form.isActive)} onChange={handleSelectChange} className="input" id="user-status-select">
+                <Select
+                  label="Status"
+                  name="isActive"
+                  value={String(form.isActive)}
+                  onChange={handleSelectChange}
+                  className="w-full"
+                  buttonClassName="py-2.5 px-3 bg-dark-900 border border-slate-700 rounded-lg text-slate-200 text-xs w-full"
+                  id="user-status-select"
+                >
                   <option value="true">Active</option>
                   <option value="false">Deactivated</option>
-                </select>
+                </Select>
               </div>
             )}
           </div>

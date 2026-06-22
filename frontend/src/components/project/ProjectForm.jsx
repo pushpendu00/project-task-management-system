@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Input from '../common/Input'
 import Button from '../common/Button'
 import api from '../../api/axios'
+import Select from '../common/Select'
 
 const STATUS_OPTIONS   = ['planning', 'active', 'on-hold', 'completed', 'cancelled', 'archived']
 const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'critical']
@@ -64,33 +65,48 @@ const ProjectForm = ({ initialData = {}, onSubmit, loading = false, onCancel }) 
       
       {/* Project Manager Selection */}
       <div>
-        <label className="label">Assigned Project Manager</label>
-        <select
+        <Select
+          label="Assigned Project Manager"
           name="assignedManager"
           value={form.assignedManager}
           onChange={handleChange}
-          className="input"
+          className="w-full"
+          buttonClassName="py-2.5 px-3 bg-dark-900 border border-slate-700 rounded-lg text-slate-200 text-xs w-full text-left"
           id="project-manager-select"
         >
           <option value="">Unassigned</option>
           {managers.map((m) => (
-            <option key={m._id} value={m._id}>{m.name} ({m.email})</option>
+            <option key={m._id} value={m._id} avatar={m.avatar} name={m.name}>{m.name} ({m.email})</option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="label">Status</label>
-          <select name="status" value={form.status} onChange={handleChange} className="input" id="project-status">
+          <Select
+            label="Status"
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            className="w-full"
+            buttonClassName="py-2.5 px-3 bg-dark-900 border border-slate-700 rounded-lg text-slate-200 text-xs w-full text-left"
+            id="project-status"
+          >
             {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace('-', ' ')}</option>)}
-          </select>
+          </Select>
         </div>
         <div>
-          <label className="label">Priority</label>
-          <select name="priority" value={form.priority} onChange={handleChange} className="input" id="project-priority">
+          <Select
+            label="Priority"
+            name="priority"
+            value={form.priority}
+            onChange={handleChange}
+            className="w-full"
+            buttonClassName="py-2.5 px-3 bg-dark-900 border border-slate-700 rounded-lg text-slate-200 text-xs w-full text-left"
+            id="project-priority"
+          >
             {PRIORITY_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-          </select>
+          </Select>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">

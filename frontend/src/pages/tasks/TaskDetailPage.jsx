@@ -17,6 +17,7 @@ import api from '../../api/axios'
 import toast from 'react-hot-toast'
 import { formatDate, formatRelativeTime } from '../../utils/formatDate'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import Select from '../../components/common/Select'
 import { getInitials } from '../../utils/getInitials'
 import { useSocket } from '../../context/SocketContext'
 
@@ -495,16 +496,16 @@ const TaskDetailPage = () => {
                   <h3 className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                     <AiOutlineMessage size={14} /> Activity & Chat ({filteredFeed.length})
                   </h3>
-                  <select
+                  <Select
                     value={feedFilter}
                     onChange={(e) => setFeedFilter(e.target.value)}
-                    className="bg-dark-800 border border-slate-700/60 rounded px-2 py-0.5 text-[10px] text-slate-350 focus:outline-none hover:border-primary-500 transition-colors cursor-pointer"
+                    buttonClassName="py-0.5 px-2 bg-dark-800 border border-slate-700/60 rounded text-[10px] text-slate-350 w-28"
                     id="chat-feed-filter"
                   >
                     <option value="all">All Activity</option>
                     <option value="messages">Only Messages</option>
                     <option value="status">Only Status Change</option>
-                  </select>
+                  </Select>
                 </div>
 
                 {/* Scrolling Chat list wrapper */}
@@ -949,11 +950,12 @@ const TaskDetailPage = () => {
 
               {/* Status Selector */}
               <div>
-                <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Status</label>
-                <select
+                <Select
+                  label="Status"
                   value={selectedTask.status}
                   onChange={(e) => handleUpdate('status', e.target.value)}
-                  className="input text-xs py-1 bg-dark-800 text-white"
+                  className="w-full"
+                  buttonClassName="py-1 px-2.5 bg-dark-800 border border-slate-700/60 rounded text-slate-200 text-xs w-full"
                   id="task-detail-status-select"
                 >
                   <option value="todo">To Do</option>
@@ -961,24 +963,25 @@ const TaskDetailPage = () => {
                   <option value="in-review">In Review</option>
                   <option value="completed">Completed</option>
                   <option value="blocked">Blocked</option>
-                </select>
+                </Select>
               </div>
 
               {/* Priority Selector (Only Admin/PM can edit, Employees read-only) */}
               <div>
                 <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Priority</label>
                 {isAdmin || isPM ? (
-                  <select
+                  <Select
                     value={selectedTask.priority}
                     onChange={(e) => handleUpdate('priority', e.target.value)}
-                    className="input text-xs py-1 bg-dark-800 text-white"
+                    className="w-full"
+                    buttonClassName="py-1 px-2.5 bg-dark-800 border border-slate-700/60 rounded text-slate-200 text-xs w-full"
                     id="task-detail-priority-select"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
                     <option value="critical">Critical</option>
-                  </select>
+                  </Select>
                 ) : (
                   <div className="capitalize text-slate-300 pl-0.5 text-xs font-semibold">
                     <Badge type="priority" value={selectedTask.priority} className="text-[10px] px-2 py-0.5" />
@@ -990,19 +993,20 @@ const TaskDetailPage = () => {
               <div>
                 <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Assignee</label>
                 {canEditAssigneeAndTimeline ? (
-                  <select
+                  <Select
                     value={selectedTask.assignedTo?._id || ''}
                     onChange={(e) => handleUpdate('assignedTo', e.target.value || null)}
-                    className="input text-xs py-1 bg-dark-800 text-white"
+                    className="w-full"
+                    buttonClassName="py-1 px-2.5 bg-dark-800 border border-slate-700/60 rounded text-slate-200 text-xs w-full"
                     id="task-detail-assignee-select"
                   >
                     <option value="">Unassigned</option>
                     {projectMembers.map((member) => (
-                      <option key={member.user?._id || member.user} value={member.user?._id || member.user}>
+                      <option key={member.user?._id || member.user} value={member.user?._id || member.user} avatar={member.user?.avatar} name={member.user?.name}>
                         {member.user?.name || 'Unknown'} ({member.role})
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 ) : (
                   <div className="flex items-center gap-1.5 mt-0.5 text-xs pl-0.5 font-semibold text-slate-300">
                     <div className="w-4.5 h-4.5 rounded-full bg-slate-700 text-slate-200 text-[9px] font-bold flex-shrink-0 flex items-center justify-center overflow-hidden">

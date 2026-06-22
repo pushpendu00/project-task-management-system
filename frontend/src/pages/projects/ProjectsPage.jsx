@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRecoilValue } from 'recoil'
 import { Link } from 'react-router-dom'
-import { AiOutlinePlus, AiOutlineSearch, AiOutlineAppstore, AiOutlineUnorderedList } from 'react-icons/ai'
+import { AiOutlinePlus, AiOutlineSearch, AiOutlineAppstore, AiOutlineUnorderedList, AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai'
 import { projectsAtom } from '../../recoil/atoms/projectAtom'
 import useProjects from '../../hooks/useProjects'
 import useAuth     from '../../hooks/useAuth'
@@ -11,6 +11,7 @@ import Modal   from '../../components/common/Modal'
 import Button  from '../../components/common/Button'
 import Spinner from '../../components/common/Spinner'
 import Badge   from '../../components/common/Badge'
+import Select  from '../../components/common/Select'
 import { formatDate } from '../../utils/formatDate'
 import ConfirmModal from '../../components/common/ConfirmModal'
 
@@ -143,8 +144,9 @@ const ProjectsPage = () => {
 
         {/* Dropdowns & Actions row, with horizontal scrolling */}
         <div className="flex items-center gap-2 w-full lg:w-auto overflow-x-auto py-1 scrollbar-none flex-nowrap">
-          <select
-            className="bg-dark-900 border border-slate-750/70 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer flex-shrink-0"
+          <Select
+            className="flex-shrink-0"
+            buttonClassName="py-1.5 px-2 bg-dark-900 border border-slate-750/70 rounded-lg text-slate-200 text-xs w-32"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             id="filter-status"
@@ -155,10 +157,11 @@ const ProjectsPage = () => {
                 {s.replace(/-/g, ' ')}
               </option>
             ))}
-          </select>
+          </Select>
 
-          <select
-            className="bg-dark-900 border border-slate-750/70 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer flex-shrink-0"
+          <Select
+            className="flex-shrink-0"
+            buttonClassName="py-1.5 px-2 bg-dark-900 border border-slate-750/70 rounded-lg text-slate-200 text-xs w-32"
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
             id="filter-priority"
@@ -169,10 +172,11 @@ const ProjectsPage = () => {
                 {p.charAt(0).toUpperCase() + p.slice(1)} Priority
               </option>
             ))}
-          </select>
+          </Select>
 
-          <select
-            className="bg-dark-900 border border-slate-750/70 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer flex-shrink-0"
+          <Select
+            className="flex-shrink-0"
+            buttonClassName="py-1.5 px-2 bg-dark-900 border border-slate-750/70 rounded-lg text-slate-200 text-xs w-44"
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
             id="sort-projects"
@@ -183,7 +187,7 @@ const ProjectsPage = () => {
             <option value="progress-desc">Progress (Descending)</option>
             <option value="end-date-asc">End Date (Ascending)</option>
             <option value="end-date-desc">End Date (Descending)</option>
-          </select>
+          </Select>
 
           {(statusFilter || priorityFilter || search || sortOrder !== 'created-desc') && (
             <button
@@ -271,17 +275,19 @@ const ProjectsPage = () => {
                         {canEdit && (
                           <button
                             onClick={() => handleEdit(project)}
-                            className="px-2.5 py-1.5 rounded-lg bg-dark-700 hover:bg-dark-600 text-slate-300 hover:text-white transition-colors"
+                            className="p-1.5 rounded-lg bg-dark-700 hover:bg-dark-600 text-slate-300 hover:text-white transition-colors"
+                            title="Edit Project"
                           >
-                            Edit
+                            <AiOutlineEdit size={16} />
                           </button>
                         )}
                         {user?.role === 'admin' && (
                           <button
                             onClick={() => handleDeleteClick(project._id)}
-                            className="px-2.5 py-1.5 rounded-lg bg-dark-700 hover:bg-red-950/40 text-slate-400 hover:text-red-400 border border-transparent hover:border-red-900/30 transition-colors"
+                            className="p-1.5 rounded-lg bg-dark-700 hover:bg-red-950/40 text-slate-400 hover:text-red-400 border border-transparent hover:border-red-900/30 transition-colors"
+                            title="Delete Project"
                           >
-                            Delete
+                            <AiOutlineDelete size={16} />
                           </button>
                         )}
                       </div>

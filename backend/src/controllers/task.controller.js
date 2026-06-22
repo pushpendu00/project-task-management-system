@@ -76,9 +76,9 @@ const getTaskById = async (req, res) => {
         path: 'project',
         select: 'name description owner assignedManager members',
         populate: [
-          { path: 'assignedManager', select: 'name email' },
-          { path: 'owner', select: 'name email' },
-          { path: 'members.user', select: 'name email' }
+          { path: 'assignedManager', select: 'name email avatar' },
+          { path: 'owner', select: 'name email avatar' },
+          { path: 'members.user', select: 'name email avatar' }
         ]
       })
       .populate('comments.user', 'name email avatar')
@@ -363,9 +363,9 @@ const updateTask = async (req, res) => {
         path: 'project',
         select: 'name description owner assignedManager members',
         populate: [
-          { path: 'assignedManager', select: 'name email' },
-          { path: 'owner', select: 'name email' },
-          { path: 'members.user', select: 'name email' }
+          { path: 'assignedManager', select: 'name email avatar' },
+          { path: 'owner', select: 'name email avatar' },
+          { path: 'members.user', select: 'name email avatar' }
         ]
       })
       .populate('comments.user', 'name email avatar')
@@ -476,9 +476,9 @@ const addComment = async (req, res) => {
         path: 'project',
         select: 'name description owner assignedManager members',
         populate: [
-          { path: 'assignedManager', select: 'name email' },
-          { path: 'owner', select: 'name email' },
-          { path: 'members.user', select: 'name email' }
+          { path: 'assignedManager', select: 'name email avatar' },
+          { path: 'owner', select: 'name email avatar' },
+          { path: 'members.user', select: 'name email avatar' }
         ]
       });
 

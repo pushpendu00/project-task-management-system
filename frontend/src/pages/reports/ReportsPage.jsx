@@ -10,6 +10,7 @@ import html2pdf from 'html2pdf.js'
 import { authUserAtom } from '../../recoil/atoms/authAtom'
 import api from '../../api/axios'
 import Spinner from '../../components/common/Spinner'
+import Select from '../../components/common/Select'
 import { getInitials } from '../../utils/getInitials'
 
 const getAvatarUrl = (path) => {
@@ -165,16 +166,17 @@ const ReportsPage = () => {
           <div className="space-y-6">
             <div className="flex items-center gap-4 flex-wrap bg-dark-800/40 p-4 rounded-xl border border-slate-800">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Select Project:</span>
-              <select
+              <Select
                 value={selectedProjectId}
                 onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="input max-w-xs text-xs py-2 bg-dark-900 border-slate-700"
+                className="w-80"
+                buttonClassName="py-2 px-3 bg-dark-900 border border-slate-700 rounded-lg text-slate-200 text-xs"
                 id="report-project-select"
               >
                 {projectsList.map(p => (
                   <option key={p._id} value={p._id}>{p.name}</option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             {projLoading ? (

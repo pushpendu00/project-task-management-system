@@ -17,6 +17,7 @@ import Modal from '../../components/common/Modal'
 import Button from '../../components/common/Button'
 import Badge from '../../components/common/Badge'
 import Spinner from '../../components/common/Spinner'
+import Select from '../../components/common/Select'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 import { formatDate } from '../../utils/formatDate'
@@ -464,8 +465,22 @@ const ProjectDetailPage = () => {
             </div>
 
             {selectedUser && (
-              <div className="mt-2 p-2 bg-primary-950/30 border border-primary-800/40 rounded-lg flex items-center justify-between text-xs text-slate-200 animate-fade-in">
-                <span>Selected User: <strong className="text-white">{selectedUser.name}</strong> ({selectedUser.email})</span>
+              <div className="mt-2 p-2 bg-primary-950/30 border border-primary-800/40 rounded-lg flex items-center gap-2.5 text-xs text-slate-200 animate-fade-in">
+                <div className="w-6 h-6 rounded-full bg-slate-700 font-bold text-slate-200 text-[10px] flex items-center justify-center overflow-hidden flex-shrink-0 mr-0.5 border border-slate-650/40">
+                  {selectedUser.avatar ? (
+                    <img
+                      src={getAvatarUrl(selectedUser.avatar)}
+                      alt={selectedUser.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    getInitials(selectedUser.name) || 'U'
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="font-semibold text-white block truncate">{selectedUser.name}</span>
+                  <span className="text-slate-500 block text-[10px] truncate">{selectedUser.email}</span>
+                </div>
                 <button type="button" onClick={() => { setSelectedUser(null); setSearchQuery('') }} className="text-slate-400 hover:text-red-400 font-bold px-1.5 transition-colors">✕</button>
               </div>
             )}
@@ -485,11 +500,22 @@ const ProjectDetailPage = () => {
                         setSelectedUser(u)
                         setSearchQuery('')
                       }}
-                      className="p-2.5 text-xs text-slate-300 hover:bg-dark-900 cursor-pointer flex items-center gap-2 justify-between transition-colors"
+                      className="p-2 py-2.5 text-xs text-slate-300 hover:bg-dark-900 cursor-pointer flex items-center gap-2.5 transition-colors"
                     >
-                      <div>
-                        <span className="font-semibold text-white">{u.name}</span>
-                        <span className="text-slate-500 ml-2">({u.email})</span>
+                      <div className="w-5 h-5 rounded-full bg-slate-700 font-bold text-slate-200 text-[10px] flex items-center justify-center overflow-hidden flex-shrink-0 border border-slate-750/30">
+                        {u.avatar ? (
+                          <img
+                            src={getAvatarUrl(u.avatar)}
+                            alt={u.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          getInitials(u.name) || 'U'
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-semibold text-white block truncate">{u.name}</span>
+                        <span className="text-slate-500 text-[10px] block truncate">{u.email}</span>
                       </div>
                     </div>
                   ))
@@ -499,11 +525,12 @@ const ProjectDetailPage = () => {
           </div>
 
           <div>
-            <label className="label">Project Role</label>
-            <select
+            <Select
+              label="Project Role"
               value={memberRole}
               onChange={(e) => setMemberRole(e.target.value)}
-              className="input text-sm"
+              className="w-full"
+              buttonClassName="py-2.5 px-3 bg-dark-900 border border-slate-750/70 rounded-lg text-slate-200 text-xs w-full text-left"
             >
               <option value="developer">Developer</option>
               <option value="manager">Manager</option>
@@ -512,7 +539,7 @@ const ProjectDetailPage = () => {
               <option value="viewer">Viewer</option>
               <option value="member">Member</option>
               <option value="employee">Employee</option>
-            </select>
+            </Select>
           </div>
 
           <div className="flex justify-end gap-3 pt-3">

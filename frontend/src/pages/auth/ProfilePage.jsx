@@ -12,6 +12,7 @@ import { formatDate } from '../../utils/formatDate'
 import toast from 'react-hot-toast'
 import Button from '../../components/common/Button'
 import Spinner from '../../components/common/Spinner'
+import Select from '../../components/common/Select'
 import { getInitials } from '../../utils/getInitials'
 
 const getAvatarUrl = (path) => {
@@ -464,18 +465,19 @@ const ProfilePage = () => {
             </div>
 
             <div>
-              <label className="label">Gender</label>
-              <select
+              <Select
+                label="Gender"
                 name="gender"
                 value={formData.gender}
                 onChange={handleInputChange}
-                className="input bg-dark-900"
+                className="w-full"
+                buttonClassName="py-2.5 px-3 bg-dark-900 border border-slate-700 rounded-lg text-slate-200 text-xs w-full text-left"
               >
                 <option value="">Select Gender</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
                 <option value="other">Other</option>
-              </select>
+              </Select>
             </div>
 
             <div className="sm:col-span-2">

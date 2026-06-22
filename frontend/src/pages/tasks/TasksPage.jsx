@@ -13,6 +13,7 @@ import Modal from '../../components/common/Modal'
 import Button from '../../components/common/Button'
 import Spinner from '../../components/common/Spinner'
 import Badge from '../../components/common/Badge'
+import Select from '../../components/common/Select'
 import { getInitials } from '../../utils/getInitials'
 
 const getAvatarUrl = (path) => {
@@ -136,50 +137,55 @@ const TasksPage = () => {
 
         {/* Second line: Dropdowns & Actions row, with horizontal scrolling */}
         <div className="flex items-center gap-2 w-full lg:w-auto overflow-x-auto py-1 scrollbar-none flex-nowrap">
-          <select
-            className="bg-dark-900 border border-slate-750/70 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer flex-shrink-0"
+          <Select
+            className="flex-shrink-0"
+            buttonClassName="py-1.5 px-2 bg-dark-900 border border-slate-750/70 rounded-lg text-slate-200 text-xs w-32"
             value={filter.status}
             onChange={(e) => setFilter((p) => ({ ...p, status: e.target.value }))}
             id="filter-status"
           >
             {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s ? s.replace(/-/g, ' ') : 'All Statuses'}</option>)}
-          </select>
+          </Select>
 
-          <select
-            className="bg-dark-900 border border-slate-750/70 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer flex-shrink-0"
+          <Select
+            className="flex-shrink-0"
+            buttonClassName="py-1.5 px-2 bg-dark-900 border border-slate-750/70 rounded-lg text-slate-200 text-xs w-32"
             value={filter.priority}
             onChange={(e) => setFilter((p) => ({ ...p, priority: e.target.value }))}
             id="filter-priority"
           >
             {PRIORITY_OPTIONS.map((p) => <option key={p} value={p}>{p ? `${p.charAt(0).toUpperCase() + p.slice(1)} Priority` : 'All Priorities'}</option>)}
-          </select>
+          </Select>
 
           {user?.role !== 'member' && projects.length > 0 && (
-            <select
-              className="bg-dark-900 border border-slate-750/70 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer max-w-[150px] flex-shrink-0"
+            <Select
+              className="flex-shrink-0"
+              buttonClassName="py-1.5 px-2 bg-dark-900 border border-slate-750/70 rounded-lg text-slate-200 text-xs w-36"
               value={filter.project || ''}
               onChange={(e) => setFilter((p) => ({ ...p, project: e.target.value }))}
               id="filter-project"
             >
               <option value="">All Projects</option>
               {projects.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
-            </select>
+            </Select>
           )}
 
           {user?.role !== 'member' && users.length > 0 && (
-            <select
-              className="bg-dark-900 border border-slate-750/70 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer max-w-[150px] flex-shrink-0"
+            <Select
+              className="flex-shrink-0"
+              buttonClassName="py-1.5 px-2 bg-dark-900 border border-slate-750/70 rounded-lg text-slate-200 text-xs w-36"
               value={filter.assignedTo || ''}
               onChange={(e) => setFilter((p) => ({ ...p, assignedTo: e.target.value }))}
               id="filter-assignee"
             >
               <option value="">All Assignees</option>
-              {users.map((u) => <option key={u._id} value={u._id}>{u.name}</option>)}
-            </select>
+              {users.map((u) => <option key={u._id} value={u._id} avatar={u.avatar} name={u.name}>{u.name}</option>)}
+            </Select>
           )}
 
-          <select
-            className="bg-dark-900 border border-slate-750/70 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer flex-shrink-0"
+          <Select
+            className="flex-shrink-0"
+            buttonClassName="py-1.5 px-2 bg-dark-900 border border-slate-750/70 rounded-lg text-slate-200 text-xs w-44"
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
             id="sort-tasks"
@@ -188,7 +194,7 @@ const TasksPage = () => {
             <option value="created-asc">Date Created (Oldest)</option>
             <option value="due-asc">Due Date (Ascending)</option>
             <option value="due-desc">Due Date (Descending)</option>
-          </select>
+          </Select>
 
           {(filter.status || filter.priority || filter.project || filter.assignedTo || searchTerm || sortOrder !== 'created-desc') && (
             <button
