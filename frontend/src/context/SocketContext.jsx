@@ -49,8 +49,22 @@ export const SocketProvider = ({ children }) => {
       
       if (type === 'notification') {
         const newNotification = data
-        // Prepend to recoil notifications state
-        setNotifications((prev) => [newNotification, ...prev])
+
+        // If it's already read, update the notification in Recoil state and skip the toast
+        if (newNotification.isRead) {
+          setNotifications((prev) =>
+            prev.map((n) => (n._id === newNotification._id ? newNotification : n))
+          )
+          return;
+        }
+
+        // Avoid adding duplicate notification to state
+        setNotifications((prev) => {
+          if (prev.some((n) => n._id === newNotification._id)) {
+            return prev.map((n) => (n._id === newNotification._id ? newNotification : n))
+          }
+          return [newNotification, ...prev]
+        })
 
         // Dismiss oldest if we already have 3 visible notification toasts
         if (notifToastIdsRef.current.length >= 3) {

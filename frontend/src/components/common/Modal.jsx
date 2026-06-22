@@ -17,10 +17,10 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-dark-950/80 backdrop-blur-sm animate-fade-in" />
       <div
-        className={`relative card w-full ${sizes[size]} animate-slide-in`}
+        className={`relative card w-full ${sizes[size]} max-h-[90vh] flex flex-col animate-slide-in`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-5 border-b border-slate-700">
+        <div className="flex items-center justify-between p-5 border-b border-slate-700 flex-shrink-0">
           <h2 className="text-lg font-semibold text-white">{title}</h2>
           <button
             onClick={onClose}
@@ -30,7 +30,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
             <AiOutlineClose size={18} />
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-5 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>,
     document.body

@@ -53,8 +53,6 @@ const Sidebar = ({ isOpen, onClose }) => {
     })
   }
 
-  links.push({ to: '/profile', label: 'Profile', icon: AiOutlineUser })
-
   return (
     <>
       {/* Mobile drawer backdrop */}
@@ -126,37 +124,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             </NavLink>
           ))}
         </nav>
-
-        {/* User */}
-        <div className="p-3 border-t border-slate-700/50 flex-shrink-0">
-          <div className={`flex items-center gap-3 px-2 py-2 rounded-lg ${collapsed ? 'justify-center' : ''}`}>
-            <div className="w-8 h-8 rounded-full bg-primary-600 text-white font-bold text-sm flex items-center justify-center flex-shrink-0 overflow-hidden">
-              {user?.avatar ? (
-                <img
-                  src={getAvatarUrl(user.avatar)}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                user?.name?.[0]?.toUpperCase() || 'U'
-              )}
-            </div>
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{user?.name}</p>
-                <p className="text-xs text-slate-500 truncate capitalize">
-                  {user?.role === 'member' ? 'Employee' : user?.role === 'manager' ? 'Project Manager' : 'Admin'}
-                </p>
-              </div>
-            )}
-          </div>
-          {!collapsed && (
-            <button onClick={logout} id="logout-btn"
-                    className="w-full mt-2 btn-ghost text-sm py-2 rounded-lg text-left px-2">
-              Logout
-            </button>
-          )}
-        </div>
       </aside>
     </>
   )

@@ -51,7 +51,7 @@ const Layout = ({ children }) => {
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.remove('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   const handleNotifClick = async (n) => {
