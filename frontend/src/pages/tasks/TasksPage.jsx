@@ -13,6 +13,15 @@ import Modal from '../../components/common/Modal'
 import Button from '../../components/common/Button'
 import Spinner from '../../components/common/Spinner'
 import Badge from '../../components/common/Badge'
+import { getInitials } from '../../utils/getInitials'
+
+const getAvatarUrl = (path) => {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  const host = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase
+  return `${host}${path}`
+}
 
 const STATUS_OPTIONS = ['', 'todo', 'in-progress', 'in-review', 'completed', 'blocked']
 const PRIORITY_OPTIONS = ['', 'low', 'medium', 'high', 'critical']
@@ -239,8 +248,16 @@ const TasksPage = () => {
                   <td className="py-3 px-4">
                     {task.assignedTo ? (
                       <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 rounded-full bg-slate-700 font-bold text-slate-200 text-[9px] flex items-center justify-center flex-shrink-0">
-                          {task.assignedTo.name?.[0]?.toUpperCase() || 'U'}
+                        <div className="w-5 h-5 rounded-full bg-slate-700 font-bold text-slate-200 text-[9px] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {task.assignedTo.avatar ? (
+                            <img
+                              src={getAvatarUrl(task.assignedTo.avatar)}
+                              alt={task.assignedTo.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            getInitials(task.assignedTo.name) || 'U'
+                          )}
                         </div>
                         <span className="truncate max-w-[100px]">{task.assignedTo.name}</span>
                       </div>

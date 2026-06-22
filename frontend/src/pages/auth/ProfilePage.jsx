@@ -12,6 +12,7 @@ import { formatDate } from '../../utils/formatDate'
 import toast from 'react-hot-toast'
 import Button from '../../components/common/Button'
 import Spinner from '../../components/common/Spinner'
+import { getInitials } from '../../utils/getInitials'
 
 const getAvatarUrl = (path) => {
   if (!path) return ''
@@ -348,7 +349,7 @@ const ProfilePage = () => {
                 />
               ) : (
                 <div className="w-full h-full bg-primary-600 text-white font-bold text-4xl flex items-center justify-center">
-                  {formData.name?.[0]?.toUpperCase()}
+                  {getInitials(formData.name)}
                 </div>
               )}
               <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -542,7 +543,7 @@ const ProfilePage = () => {
                   />
                 ) : (
                   <div className="w-full h-full bg-primary-600 text-white font-bold text-3xl flex items-center justify-center">
-                    {user.name?.[0]?.toUpperCase()}
+                    {getInitials(user.name)}
                   </div>
                 )}
                 <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">

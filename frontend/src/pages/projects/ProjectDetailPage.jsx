@@ -21,6 +21,15 @@ import api from '../../api/axios'
 import toast from 'react-hot-toast'
 import { formatDate } from '../../utils/formatDate'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import { getInitials } from '../../utils/getInitials'
+
+const getAvatarUrl = (path) => {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  const host = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase
+  return `${host}${path}`
+}
 
 const ProjectDetailPage = () => {
   const { id } = useParams()
@@ -259,8 +268,16 @@ const ProjectDetailPage = () => {
                         <td className="py-3.5 px-5">
                           {task.assignedTo ? (
                             <div className="flex items-center gap-2">
-                              <div className="w-5 h-5 rounded-full bg-slate-700 font-bold text-slate-200 text-[10px] flex items-center justify-center">
-                                {task.assignedTo.name?.[0]?.toUpperCase() || 'U'}
+                              <div className="w-5 h-5 rounded-full bg-slate-700 font-bold text-slate-200 text-[10px] flex items-center justify-center overflow-hidden flex-shrink-0">
+                                {task.assignedTo.avatar ? (
+                                  <img
+                                    src={getAvatarUrl(task.assignedTo.avatar)}
+                                    alt={task.assignedTo.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  getInitials(task.assignedTo.name) || 'U'
+                                )}
                               </div>
                               <span>{task.assignedTo.name}</span>
                             </div>
@@ -297,8 +314,16 @@ const ProjectDetailPage = () => {
               <div>
                 <span className="block text-[10px] text-slate-500 font-semibold uppercase">Project Owner</span>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <div className="w-5 h-5 rounded-full bg-primary-600 text-white font-bold text-[10px] flex items-center justify-center flex-shrink-0">
-                    {project.owner?.name?.[0]?.toUpperCase()}
+                  <div className="w-5 h-5 rounded-full bg-primary-600 text-white font-bold text-[10px] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {project.owner?.avatar ? (
+                      <img
+                        src={getAvatarUrl(project.owner.avatar)}
+                        alt={project.owner.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      getInitials(project.owner?.name)
+                    )}
                   </div>
                   <span className="text-xs text-slate-200 truncate">{project.owner?.name}</span>
                 </div>
@@ -307,8 +332,16 @@ const ProjectDetailPage = () => {
               <div>
                 <span className="block text-[10px] text-slate-500 font-semibold uppercase">Project Manager</span>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <div className="w-5 h-5 rounded-full bg-purple-600 text-white font-bold text-[10px] flex items-center justify-center flex-shrink-0">
-                    {project.assignedManager?.name?.[0]?.toUpperCase() || 'U'}
+                  <div className="w-5 h-5 rounded-full bg-purple-600 text-white font-bold text-[10px] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {project.assignedManager?.avatar ? (
+                      <img
+                        src={getAvatarUrl(project.assignedManager.avatar)}
+                        alt={project.assignedManager.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      getInitials(project.assignedManager?.name) || 'U'
+                    )}
                   </div>
                   <span className="text-xs text-slate-200 truncate">{project.assignedManager?.name || 'Unassigned'}</span>
                 </div>
@@ -365,8 +398,16 @@ const ProjectDetailPage = () => {
                 project.members.map((member) => (
                   <div key={member.user?._id} className="flex items-center justify-between gap-1.5 p-1 rounded-lg hover:bg-dark-800/40 transition-colors">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 font-bold text-[10px] flex items-center justify-center flex-shrink-0">
-                        {member.user?.name?.[0]?.toUpperCase()}
+                      <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 font-bold text-[10px] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {member.user?.avatar ? (
+                          <img
+                            src={getAvatarUrl(member.user.avatar)}
+                            alt={member.user.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          getInitials(member.user?.name)
+                        )}
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-slate-200 truncate leading-tight">{member.user?.name}</p>
@@ -501,8 +542,16 @@ const ProjectDetailPage = () => {
               project.members.map((member) => (
                 <div key={member.user?._id || member.user} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-dark-900 border border-slate-800 text-left">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 font-bold text-[10px] flex items-center justify-center flex-shrink-0">
-                      {member.user?.name?.[0]?.toUpperCase() || 'U'}
+                    <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 font-bold text-[10px] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {member.user?.avatar ? (
+                        <img
+                          src={getAvatarUrl(member.user.avatar)}
+                          alt={member.user.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        getInitials(member.user?.name) || 'U'
+                      )}
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-slate-200 truncate">{member.user?.name || 'Unknown'}</p>

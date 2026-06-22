@@ -10,6 +10,15 @@ import html2pdf from 'html2pdf.js'
 import { authUserAtom } from '../../recoil/atoms/authAtom'
 import api from '../../api/axios'
 import Spinner from '../../components/common/Spinner'
+import { getInitials } from '../../utils/getInitials'
+
+const getAvatarUrl = (path) => {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  const host = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase
+  return `${host}${path}`
+}
 
 const ReportsPage = () => {
   const user = useRecoilValue(authUserAtom)
@@ -283,9 +292,17 @@ const ReportsPage = () => {
                       {employeeReport.map((emp) => (
                         <tr key={emp.employeeId} className="hover:bg-dark-800/10">
                           <td className="py-4 px-6 flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-slate-700 font-bold text-slate-200 text-xs flex items-center justify-center">
-                              {emp.name[0].toUpperCase()}
-                            </div>
+                             <div className="w-8 h-8 rounded-full bg-slate-700 font-bold text-slate-200 text-xs flex items-center justify-center flex-shrink-0 overflow-hidden">
+                               {emp.avatar ? (
+                                 <img
+                                   src={getAvatarUrl(emp.avatar)}
+                                   alt={emp.name}
+                                   className="w-full h-full object-cover"
+                                 />
+                               ) : (
+                                 getInitials(emp.name)
+                               )}
+                             </div>
                             <div>
                               <p className="font-semibold text-white">{emp.name}</p>
                               <p className="text-[10px] text-slate-500">{emp.email}</p>

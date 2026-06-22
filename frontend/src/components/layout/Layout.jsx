@@ -9,6 +9,7 @@ import { authTokenAtom } from '../../recoil/atoms/authAtom'
 import { notificationsAtom } from '../../recoil/atoms/notificationAtom'
 import useNotifications from '../../hooks/useNotifications'
 import api from '../../api/axios'
+import { getInitials } from '../../utils/getInitials'
 
 const getAvatarUrl = (path) => {
   if (!path) return ''
@@ -180,7 +181,7 @@ const Layout = ({ children }) => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  user?.name?.[0]?.toUpperCase()
+                  getInitials(user?.name)
                 )}
               </button>
 
@@ -195,7 +196,7 @@ const Layout = ({ children }) => {
                       />
                     ) : (
                       <div className="w-7 h-7 rounded-full bg-primary-700 text-white font-bold text-xs flex items-center justify-center">
-                        {user?.name?.[0]?.toUpperCase()}
+                        {getInitials(user?.name)}
                       </div>
                     )}
                     <div className="min-w-0">

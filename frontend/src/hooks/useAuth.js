@@ -6,12 +6,12 @@ import { isAuthenticatedSelector } from '../recoil/selectors/authSelectors'
 import { loginApi, registerApi, getMeApi, logoutApi } from '../api/auth.api'
 
 const useAuth = () => {
-  const [user,        setUser]        = useRecoilState(authUserAtom)
-  const [token,       setToken]       = useRecoilState(authTokenAtom)
-  const [loading,     setLoading]     = useRecoilState(authLoadingAtom)
+  const [user, setUser] = useRecoilState(authUserAtom)
+  const [token, setToken] = useRecoilState(authTokenAtom)
+  const [loading, setLoading] = useRecoilState(authLoadingAtom)
   const [authChecked, setAuthChecked] = useRecoilState(authCheckedAtom)
-  const isAuthenticated               = useRecoilValue(isAuthenticatedSelector)
-  const navigate                      = useNavigate()
+  const isAuthenticated = useRecoilValue(isAuthenticatedSelector)
+  const navigate = useNavigate()
 
   const login = async (credentials) => {
     try {
@@ -26,6 +26,7 @@ const useAuth = () => {
       navigate('/dashboard')
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed')
+      throw error
     } finally {
       setLoading(false)
     }
@@ -44,6 +45,7 @@ const useAuth = () => {
       navigate('/dashboard')
     } catch (error) {
       toast.error(error.response?.data?.message || 'Registration failed')
+      throw error
     } finally {
       setLoading(false)
     }
@@ -65,7 +67,7 @@ const useAuth = () => {
   }
 
   const logout = async () => {
-    try { await logoutApi() } catch (_) {}
+    try { await logoutApi() } catch (_) { }
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     setToken(null)

@@ -7,6 +7,15 @@ import Input from '../../components/common/Input'
 import Modal from '../../components/common/Modal'
 import Spinner from '../../components/common/Spinner'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import { getInitials } from '../../utils/getInitials'
+
+const getAvatarUrl = (path) => {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  const host = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase
+  return `${host}${path}`
+}
 
 const UsersPage = () => {
   const [users, setUsers] = useState([])
@@ -188,8 +197,16 @@ const UsersPage = () => {
                 {filteredUsers.map((u) => (
                   <tr key={u._id} className="hover:bg-dark-800/20 transition-colors">
                     <td className="py-4 px-6 flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-slate-700 font-bold text-slate-200 text-sm flex items-center justify-center flex-shrink-0">
-                        {u.name[0].toUpperCase()}
+                      <div className="w-9 h-9 rounded-full bg-slate-700 font-bold text-slate-200 text-sm flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {u.avatar ? (
+                          <img
+                            src={getAvatarUrl(u.avatar)}
+                            alt={u.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          getInitials(u.name)
+                        )}
                       </div>
                       <div>
                         <p className="font-semibold text-white">{u.name}</p>

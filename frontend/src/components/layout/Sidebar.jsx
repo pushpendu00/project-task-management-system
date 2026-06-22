@@ -53,6 +53,8 @@ const Sidebar = ({ isOpen, onClose }) => {
     })
   }
 
+  links.push({ to: '/profile', label: 'Profile', icon: AiOutlineUser })
+
   return (
     <>
       {/* Mobile drawer backdrop */}

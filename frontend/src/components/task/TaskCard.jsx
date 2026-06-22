@@ -2,6 +2,15 @@ import React from 'react'
 import { AiOutlineCalendar, AiOutlineUser } from 'react-icons/ai'
 import Badge from '../common/Badge'
 import { formatDate } from '../../utils/formatDate'
+import { getInitials } from '../../utils/getInitials'
+
+const getAvatarUrl = (path) => {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  const host = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase
+  return `${host}${path}`
+}
 
 const TaskCard = ({ task, onClick, onDragStart }) => (
   <div
@@ -38,8 +47,16 @@ const TaskCard = ({ task, onClick, onDragStart }) => (
       <div className="flex items-center gap-1 min-w-0 flex-1">
         {task.assignedTo ? (
           <>
-            <div className="w-4 h-4 rounded-full bg-primary-700 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
-              {task.assignedTo.name?.[0]?.toUpperCase()}
+            <div className="w-4 h-4 rounded-full bg-primary-700 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 overflow-hidden">
+              {task.assignedTo.avatar ? (
+                <img
+                  src={getAvatarUrl(task.assignedTo.avatar)}
+                  alt={task.assignedTo.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                getInitials(task.assignedTo.name)
+              )}
             </div>
             <span className="truncate text-slate-400 max-w-[60px] sm:max-w-[80px]" title={task.assignedTo.name}>
               {task.assignedTo.name}

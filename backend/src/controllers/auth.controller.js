@@ -61,6 +61,16 @@ const login = async (req, res) => {
         .json({ success: false, message: 'Invalid credentials' });
     }
 
+    if (!user.isActive) {
+      const firstAdmin = await User.findOne({ role: 'admin' }).select('name email');
+      return res.status(403).json({
+        success: false,
+        deactivated: true,
+        message: 'your account is deactivate please connect your admin',
+        admin: firstAdmin ? { name: firstAdmin.name, email: firstAdmin.email } : null
+      });
+    }
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res

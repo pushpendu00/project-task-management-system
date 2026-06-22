@@ -17,7 +17,16 @@ import api from '../../api/axios'
 import toast from 'react-hot-toast'
 import { formatDate, formatRelativeTime } from '../../utils/formatDate'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import { getInitials } from '../../utils/getInitials'
 import { useSocket } from '../../context/SocketContext'
+
+const getAvatarUrl = (path) => {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  const host = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase
+  return `${host}${path}`
+}
 
 const getHistoryMessage = (log) => {
   const userName = log.user?.name || 'System Actor'
@@ -516,8 +525,16 @@ const TaskDetailPage = () => {
                               className="w-full transition-all duration-500 rounded p-1"
                             >
                               <div className={`flex items-center gap-2 group max-w-[85%] ${isCurrentUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}>
-                                <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-[9px] flex-shrink-0">
-                                  {item.user?.name?.[0]?.toUpperCase() || 'U'}
+                                <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-[9px] flex-shrink-0 overflow-hidden">
+                                  {item.user?.avatar ? (
+                                    <img
+                                      src={getAvatarUrl(item.user.avatar)}
+                                      alt={item.user.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    getInitials(item.user?.name) || 'U'
+                                  )}
                                 </div>
                                 <div 
                                   id={`comment-${item._id}`}
@@ -801,8 +818,16 @@ const TaskDetailPage = () => {
                       <div key={log._id} className="card p-3 space-y-2 border border-slate-800 bg-dark-850/30 text-xs">
                         <div className="flex justify-between items-start gap-4">
                           <div className="flex items-center gap-1.5">
-                            <div className="w-5 h-5 rounded-full bg-slate-700 text-slate-200 font-bold text-[9px] flex items-center justify-center">
-                              {log.employee?.name?.[0]?.toUpperCase()}
+                            <div className="w-5 h-5 rounded-full bg-slate-700 text-slate-200 font-bold text-[9px] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                              {log.employee?.avatar ? (
+                                <img
+                                  src={getAvatarUrl(log.employee.avatar)}
+                                  alt={log.employee.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                getInitials(log.employee?.name)
+                              )}
                             </div>
                             <div>
                               <p className="font-semibold text-slate-200 text-xs">{log.employee?.name}</p>
@@ -980,8 +1005,16 @@ const TaskDetailPage = () => {
                   </select>
                 ) : (
                   <div className="flex items-center gap-1.5 mt-0.5 text-xs pl-0.5 font-semibold text-slate-300">
-                    <div className="w-4.5 h-4.5 rounded-full bg-slate-700 text-slate-200 text-[9px] font-bold flex-shrink-0 flex items-center justify-center">
-                      {selectedTask.assignedTo?.name?.[0]?.toUpperCase() || 'U'}
+                    <div className="w-4.5 h-4.5 rounded-full bg-slate-700 text-slate-200 text-[9px] font-bold flex-shrink-0 flex items-center justify-center overflow-hidden">
+                      {selectedTask.assignedTo?.avatar ? (
+                        <img
+                          src={getAvatarUrl(selectedTask.assignedTo.avatar)}
+                          alt={selectedTask.assignedTo.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        getInitials(selectedTask.assignedTo?.name) || 'U'
+                      )}
                     </div>
                     <span>{selectedTask.assignedTo?.name || 'Unassigned'}</span>
                   </div>
