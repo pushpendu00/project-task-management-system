@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
+const path = require('path');
 require('dotenv').config();
 
 // Route imports
@@ -12,6 +13,7 @@ const taskRoutes = require('./routes/task.routes');
 const worklogRoutes = require('./routes/worklog.routes');
 const reportRoutes = require('./routes/report.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const uploadRoutes = require('./routes/upload.routes');
 const { initScheduler } = require('./config/scheduler');
 
 // Connect to MongoDB
@@ -26,6 +28,7 @@ app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -35,6 +38,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/worklogs', worklogRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import {
   AiOutlineCalendar, AiOutlineClockCircle,
   AiOutlineUser, AiOutlineDelete, AiOutlineMessage, AiOutlineEdit,
   AiOutlinePaperClip, AiOutlinePlus, AiOutlineHistory, AiOutlineComment,
-  AiOutlineArrowLeft
+  AiOutlineArrowLeft, AiOutlineClose
 } from 'react-icons/ai'
 import { selectedTaskAtom } from '../../recoil/atoms/taskAtom'
 import useTasks from '../../hooks/useTasks'
@@ -59,6 +59,13 @@ const getHistoryMessage = (log) => {
   }
 }
 
+const getAttachmentUrl = (path) => {
+  if (!path) return ''
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  const host = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase
+  return `${host}${path}`
+}
+
 const TaskDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -77,6 +84,9 @@ const TaskDetailPage = () => {
   // Comments
   const [newComment, setNewComment] = useState('')
   const [addingComment, setAddingComment] = useState(false)
+  const [selectedFile, setSelectedFile] = useState(null) // { url, name, type, size }
+  const [uploadingFile, setUploadingFile] = useState(false)
+  const fileInputRef = useRef(null)
 
   // Work Logs
   const [workLogs, setWorkLogs] = useState([])
@@ -154,13 +164,50 @@ const TaskDetailPage = () => {
     setIsEditingDesc(false)
   }
 
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    try {
+      setUploadingFile(true)
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const { data } = await api.post('/uploads', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+
+      if (data.success) {
+        setSelectedFile(data.file)
+        toast.success(`Uploaded: ${file.name}`)
+      } else {
+        toast.error('Failed to upload file')
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error(error.response?.data?.message || 'File upload failed')
+    } finally {
+      setUploadingFile(false)
+      e.target.value = ''
+    }
+  }
+
   const handleAddComment = async (e) => {
     e.preventDefault()
-    if (!newComment.trim()) return
+    if (!newComment.trim() && !selectedFile) return
     try {
       setAddingComment(true)
-      await addComment(id, newComment)
+      const commentPayload = {
+        text: newComment,
+        attachmentUrl: selectedFile?.url || null,
+        attachmentName: selectedFile?.name || null,
+        attachmentType: selectedFile?.type || null
+      }
+      await addComment(id, commentPayload)
       setNewComment('')
+      setSelectedFile(null)
     } finally {
       setAddingComment(false)
     }
@@ -262,7 +309,7 @@ const TaskDetailPage = () => {
   ].sort((a, b) => a.date - b.date)
 
   return (
-    <div className="animate-fade-in flex flex-col min-h-0 text-xs">
+    <div className="animate-fade-in flex flex-col text-xs" style={{ height: 'calc(100vh - 7.5rem)' }}>
       {/* Main card panel */}
       <div className="card w-full flex flex-col overflow-hidden border border-slate-700/50 min-h-0 flex-1">
         {/* Header */}
@@ -347,14 +394,42 @@ const TaskDetailPage = () => {
                             </div>
                             <div className={`p-2 rounded-lg border ${
                               isCurrentUser 
-                                ? 'bg-primary-950/40 border-primary-850/40 text-slate-250 rounded-tr-none' 
+                                ? 'bg-primary-900 border-primary-700/50 text-slate-100 rounded-tr-none' 
                                 : 'bg-dark-800/80 border-slate-700/30 text-slate-300 rounded-tl-none'
                             }`}>
                               <div className="flex items-center justify-between gap-3 mb-0.5">
                                 <span className="font-bold text-[10px] text-slate-300">{item.user?.name}</span>
                                 <span className="text-[8px] text-slate-500">{formatRelativeTime(item.createdAt)}</span>
                               </div>
-                              <p className="text-[11px] whitespace-pre-wrap leading-relaxed">{item.text}</p>
+                              {item.text && <p className="text-[11px] whitespace-pre-wrap leading-relaxed">{item.text}</p>}
+                              {item.attachmentUrl && (
+                                <div className="mt-1.5">
+                                  {item.attachmentType?.startsWith('image/') ? (
+                                    <a
+                                      href={getAttachmentUrl(item.attachmentUrl)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="block max-w-[200px] overflow-hidden rounded border border-slate-700/50 hover:opacity-90 transition-opacity"
+                                    >
+                                      <img
+                                        src={getAttachmentUrl(item.attachmentUrl)}
+                                        alt={item.attachmentName}
+                                        className="max-h-[120px] object-cover"
+                                      />
+                                    </a>
+                                  ) : (
+                                    <a
+                                      href={getAttachmentUrl(item.attachmentUrl)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1.5 bg-dark-900/60 hover:bg-dark-950 p-1 px-2 rounded border border-slate-800/80 text-[10px] text-primary-400 hover:text-primary-350 transition-colors font-medium max-w-full"
+                                    >
+                                      <AiOutlinePaperClip size={11} className="flex-shrink-0" />
+                                      <span className="truncate max-w-[120px]">{item.attachmentName || 'Attachment'}</span>
+                                    </a>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                         )
@@ -374,31 +449,72 @@ const TaskDetailPage = () => {
                 </div>
 
                 {/* Add Comment Input at bottom */}
-                <form onSubmit={handleAddComment} className="flex gap-2 items-end flex-shrink-0 bg-dark-900/60 p-2 rounded-lg border border-slate-800">
-                  <div className="w-6 h-6 rounded-full bg-primary-700 text-white flex items-center justify-center font-bold text-[9px] flex-shrink-0 mb-1">
-                    {user?.name?.[0]?.toUpperCase()}
-                  </div>
-                  <div className="flex-1">
-                    <textarea
-                      rows={1}
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="Type a message..."
-                      className="w-full text-xs bg-transparent border-none focus:ring-0 p-1 min-h-[30px] max-h-[70px] resize-none text-slate-200 placeholder-slate-500"
-                      style={{ outline: 'none', boxShadow: 'none' }}
-                      id="comment-input"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleAddComment(e);
-                        }
-                      }}
+                <div className="flex flex-col flex-shrink-0 bg-dark-900/60 p-2 rounded-lg border border-slate-800 space-y-1">
+                  {selectedFile && (
+                    <div className="flex items-center justify-between bg-dark-850 border border-slate-800 p-1.5 px-3 rounded text-[10px] text-slate-350 w-full mb-1">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <AiOutlinePaperClip size={12} className="text-primary-400 flex-shrink-0" />
+                        <span className="truncate max-w-[200px] font-semibold">{selectedFile.name}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFile(null)}
+                        className="text-slate-500 hover:text-white transition-colors"
+                      >
+                        <AiOutlineClose size={12} />
+                      </button>
+                    </div>
+                  )}
+
+                  {uploadingFile && (
+                    <div className="flex items-center gap-1.5 text-[9px] text-slate-500 italic mb-1 ml-1">
+                      <Spinner size="xs" /> Uploading attachment...
+                    </div>
+                  )}
+
+                  <form onSubmit={handleAddComment} className="flex gap-2 items-end">
+                    <div className="w-6 h-6 rounded-full bg-primary-700 text-white flex items-center justify-center font-bold text-[9px] flex-shrink-0 mb-1">
+                      {user?.name?.[0]?.toUpperCase()}
+                    </div>
+                    
+                    <button
+                      type="button"
+                      disabled={uploadingFile}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="bg-dark-800 hover:bg-dark-750 text-slate-400 hover:text-white border border-slate-700/50 p-1.5 rounded transition-colors mb-1"
+                      title="Attach file, image, or document"
+                    >
+                      <AiOutlinePaperClip size={12} />
+                    </button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="hidden"
                     />
-                  </div>
-                  <Button type="submit" variant="primary" size="xs" loading={addingComment} className="flex-shrink-0 py-1 px-2.5">
-                    Send
-                  </Button>
-                </form>
+
+                    <div className="flex-1">
+                      <textarea
+                        rows={1}
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Type a message or attach a file..."
+                        className="w-full text-xs bg-transparent border-none focus:ring-0 p-1 min-h-[30px] max-h-[70px] resize-none text-slate-200 placeholder-slate-500"
+                        style={{ outline: 'none', boxShadow: 'none' }}
+                        id="comment-input"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleAddComment(e);
+                          }
+                        }}
+                      />
+                    </div>
+                    <Button type="submit" variant="primary" size="xs" loading={addingComment} className="flex-shrink-0 py-1 px-2.5 mb-0.5">
+                      Send
+                    </Button>
+                  </form>
+                </div>
               </div>
             )}
 

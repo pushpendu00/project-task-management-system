@@ -398,7 +398,13 @@ const addComment = async (req, res) => {
         .json({ success: false, message: 'Task not found' });
     }
 
-    task.comments.push({ user: req.user._id, text: req.body.text });
+    task.comments.push({
+      user: req.user._id,
+      text: req.body.text || '',
+      attachmentUrl: req.body.attachmentUrl,
+      attachmentName: req.body.attachmentName,
+      attachmentType: req.body.attachmentType
+    });
     await task.save();
     
     const updated = await Task.findById(req.params.id)
@@ -422,7 +428,12 @@ const addComment = async (req, res) => {
       action: 'TASK_COMMENT_ADD',
       entity: 'Task',
       entityId: task._id,
-      newValue: { text: req.body.text },
+      newValue: {
+        text: req.body.text,
+        attachmentUrl: req.body.attachmentUrl,
+        attachmentName: req.body.attachmentName,
+        attachmentType: req.body.attachmentType
+      },
     });
 
     res.status(200).json({ success: true, task: updated });

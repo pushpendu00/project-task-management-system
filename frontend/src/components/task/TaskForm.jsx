@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Input from '../common/Input'
 import Button from '../common/Button'
 import api from '../../api/axios'
@@ -22,17 +22,22 @@ const TaskForm = ({ initialData = {}, projectId, members = [], onSubmit, loading
   const [projectMembers, setProjectMembers] = useState(members)
   const [loadingMembers, setLoadingMembers] = useState(false)
 
+  const initialProjId = typeof initialData.project === 'string' ? initialData.project : initialData.project?._id
+
   useEffect(() => {
-    if (!projectId && !initialData.project) {
+    if (!projectId && !initialProjId) {
       api.get('/projects')
         .then(({ data }) => setProjects(data.projects || []))
         .catch(() => {})
     }
-  }, [projectId, initialData.project])
+  }, [projectId, initialProjId])
+
+  const membersStr = JSON.stringify(members)
+  const memoizedMembers = useMemo(() => members, [membersStr])
 
   useEffect(() => {
-    if (members && members.length > 0) {
-      setProjectMembers(members)
+    if (memoizedMembers && memoizedMembers.length > 0) {
+      setProjectMembers(memoizedMembers)
     } else if (form.project) {
       setLoadingMembers(true)
       api.get(`/projects/${form.project}`)
@@ -48,7 +53,7 @@ const TaskForm = ({ initialData = {}, projectId, members = [], onSubmit, loading
     } else {
       setProjectMembers([])
     }
-  }, [form.project, members])
+  }, [form.project, memoizedMembers])
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))

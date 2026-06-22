@@ -31,7 +31,14 @@ router.route('/:id').get(getTaskById).put(updateTask).delete(deleteTask);
 
 router.post(
   '/:id/comments',
-  [body('text').notEmpty().withMessage('Comment text is required')],
+  [
+    body('text').custom((value, { req }) => {
+      if (!value?.trim() && !req.body.attachmentUrl) {
+        throw new Error('Comment text or attachment is required');
+      }
+      return true;
+    }),
+  ],
   validate,
   addComment
 );

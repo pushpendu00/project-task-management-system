@@ -72,9 +72,10 @@ const useTasks = () => {
     }
   }
 
-  const addComment = async (id, text) => {
+  const addComment = async (id, commentData) => {
     try {
-      const { data } = await addCommentApi(id, { text })
+      const payload = typeof commentData === 'string' ? { text: commentData } : commentData
+      const { data } = await addCommentApi(id, payload)
       setSelectedTask(data.task)
       return data.task
     } catch (error) {
