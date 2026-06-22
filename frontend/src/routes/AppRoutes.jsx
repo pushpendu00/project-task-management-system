@@ -15,6 +15,7 @@ import TaskDetailPage    from '../pages/tasks/TaskDetailPage'
 import UsersPage         from '../pages/users/UsersPage'
 import ReportsPage       from '../pages/reports/ReportsPage'
 import NotificationsPage from '../pages/notifications/NotificationsPage'
+import ProfilePage       from '../pages/auth/ProfilePage'
 import Spinner           from '../components/common/Spinner'
 import useAuth from '../hooks/useAuth'
 
@@ -56,6 +57,7 @@ const AppRoutes = () => {
         <Route path="/users"        element={<UsersPage />}         />
         <Route path="/reports"      element={<ReportsPage />}       />
         <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/profile"      element={<ProfilePage />}       />
       </Route>
 
       {/* Fallback */}

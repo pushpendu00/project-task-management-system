@@ -76,7 +76,7 @@ const createUser = async (req, res) => {
 // @access  Private
 const updateUser = async (req, res) => {
   try {
-    const { name, email, role, isActive, avatar, password } = req.body;
+    const { name, email, role, isActive, avatar, password, address, phone, gender } = req.body;
 
     const userToUpdate = await User.findById(req.params.id);
     if (!userToUpdate) {
@@ -100,21 +100,15 @@ const updateUser = async (req, res) => {
     if (name !== undefined) updateData.name = name;
     if (avatar !== undefined) updateData.avatar = avatar;
     if (password) updateData.password = password; // pre-save hook will hash it
+    if (address !== undefined) updateData.address = address;
+    if (phone !== undefined) updateData.phone = phone;
+    if (gender !== undefined) updateData.gender = gender;
 
-    // Fields that only Admin can update or update emails
+    // Fields that only Admin can update
     if (isAdmin) {
       if (email !== undefined) updateData.email = email;
       if (role !== undefined) updateData.role = role;
       if (isActive !== undefined) updateData.isActive = isActive;
-    } else {
-      // Self can update email but let's check validation
-      if (email !== undefined && email !== userToUpdate.email) {
-        const emailExists = await User.findOne({ email });
-        if (emailExists) {
-          return res.status(400).json({ success: false, message: 'Email already in use' });
-        }
-        updateData.email = email;
-      }
     }
 
     // Perform update

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { NavLink } from 'react-router-dom'
+import React, { useState, useEffect, useRef } from 'react'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast'
 import { useRecoilValue, useRecoilState } from 'recoil'
 import { AiOutlineMenu, AiOutlineLogout, AiOutlineBell } from 'react-icons/ai'
@@ -10,12 +10,26 @@ import { notificationsAtom } from '../../recoil/atoms/notificationAtom'
 import useNotifications from '../../hooks/useNotifications'
 import api from '../../api/axios'
 
+const getAvatarUrl = (path) => {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  const host = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase
+  return `${host}${path}`
+}
+
 const Layout = ({ children }) => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const { user, logout } = useAuth()
   const token = useRecoilValue(authTokenAtom)
   const [notifications, setNotifications] = useRecoilState(notificationsAtom)
-  const { fetchNotifications } = useNotifications()
+  const { fetchNotifications, markAsRead } = useNotifications()
+  const navigate = useNavigate()
+
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const notificationsRef = useRef(null)
+  const profileRef = useRef(null)
 
   const unreadCount = notifications.filter(n => !n.isRead).length
 
@@ -25,6 +39,30 @@ const Layout = ({ children }) => {
       fetchNotifications()
     }
   }, [token, user]) // eslint-disable-line
+
+  // Handle outside clicks to close the dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+        setNotificationsOpen(false)
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setProfileOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.remove('mousedown', handleClickOutside)
+  }, [])
+
+  const handleNotifClick = async (n) => {
+    setNotificationsOpen(false)
+    if (!n.isRead) {
+      await markAsRead(n._id)
+    }
+    if (n.relatedLink) {
+      navigate(n.relatedLink)
+    }
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-dark-950 text-slate-100 font-sans">
@@ -47,47 +85,148 @@ const Layout = ({ children }) => {
             <span className="text-lg font-bold text-white tracking-wider md:hidden">
               <span className="text-primary-400">Task</span>Flow
             </span>
-            <span className="hidden md:inline-block text-sm font-medium text-slate-400">
-              Welcome back, <strong className="text-white">{user?.name}</strong>!
-            </span>
           </div>
 
           {/* Right section: Profile & Quick actions */}
           <div className="flex items-center gap-4">
-            {/* Notification Bell */}
-            <NavLink
-              to="/notifications"
-              className="relative p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-700 transition-colors flex-shrink-0"
-              title="Notifications"
-            >
-              <AiOutlineBell size={20} />
-              {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-primary-500 rounded-full flex items-center justify-center border border-dark-800" />
-              )}
-            </NavLink>
+            {/* Notification Icon and Popup Dropdown */}
+            <div className="relative" ref={notificationsRef}>
+              <button
+                onClick={() => {
+                  setNotificationsOpen(!notificationsOpen)
+                  setProfileOpen(false)
+                }}
+                className="relative p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-700 transition-colors flex-shrink-0 focus:outline-none cursor-pointer"
+                title="Notifications"
+                id="navbar-notifications-btn"
+              >
+                <AiOutlineBell size={20} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-primary-500 rounded-full flex items-center justify-center text-[9px] text-white font-bold px-1 border border-dark-800">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
 
-            {/* User badge */}
-            <div className="flex items-center gap-2.5">
-              <div className="hidden sm:flex flex-col text-right">
-                <span className="text-xs font-semibold text-slate-200">{user?.name}</span>
-                <span className="text-[10px] text-slate-500 capitalize">
-                  {user?.role === 'member' ? 'Employee' : user?.role === 'manager' ? 'Project Manager' : 'Admin'}
-                </span>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-primary-600 text-white font-bold text-sm flex items-center justify-center border border-primary-500/30">
-                {user?.name?.[0]?.toUpperCase()}
-              </div>
+              {notificationsOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-dark-850 border border-slate-700/60 rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in text-left">
+                  <div className="p-3 border-b border-slate-700/50 flex justify-between items-center bg-dark-900/30">
+                    <span className="text-xs font-bold text-white">Latest Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="text-[10px] bg-primary-900/40 text-primary-400 border border-primary-800/40 px-1.5 py-0.5 rounded-full font-bold">
+                        {unreadCount} unread
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-800/40">
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-slate-500">
+                        No notifications yet.
+                      </div>
+                    ) : (
+                      notifications.slice(0, 10).map((n) => (
+                        <div
+                          key={n._id}
+                          onClick={() => handleNotifClick(n)}
+                          className={`p-3 flex items-start gap-2.5 cursor-pointer hover:bg-dark-700/40 transition-colors ${
+                            !n.isRead ? 'bg-primary-900/5' : ''
+                          }`}
+                        >
+                          <span className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${
+                            !n.isRead ? 'bg-primary-500' : 'bg-transparent'
+                          }`} />
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-[11px] leading-snug break-words ${
+                              !n.isRead ? 'text-white font-medium' : 'text-slate-400'
+                            }`}>
+                              {n.message}
+                            </p>
+                            <span className="text-[9px] text-slate-500 mt-1 block">
+                              {new Date(n.createdAt).toLocaleDateString()} at {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <Link
+                    to="/notifications"
+                    onClick={() => setNotificationsOpen(false)}
+                    className="block text-center text-xs font-semibold text-primary-400 hover:text-primary-355 py-2.5 border-t border-slate-700/50 bg-dark-900/40 hover:bg-dark-900/60 transition-colors"
+                  >
+                    Show More
+                  </Link>
+                </div>
+              )}
             </div>
 
-            {/* Quick Logout */}
-            <button
-              onClick={logout}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-950/20 border border-transparent hover:border-red-900/30 transition-colors"
-              title="Logout"
-              id="header-logout-btn"
-            >
-              <AiOutlineLogout size={18} />
-            </button>
+            {/* User Profile Dropdown */}
+            <div className="relative" ref={profileRef}>
+              <button
+                onClick={() => {
+                  setProfileOpen(!profileOpen)
+                  setNotificationsOpen(false)
+                }}
+                className="w-8 h-8 rounded-full bg-primary-600 hover:bg-primary-500 text-white font-bold text-sm flex items-center justify-center border border-primary-500/30 transition-colors focus:outline-none cursor-pointer overflow-hidden"
+                title="Account Menu"
+                id="navbar-profile-btn"
+              >
+                {user?.avatar ? (
+                  <img
+                    src={getAvatarUrl(user.avatar)}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  user?.name?.[0]?.toUpperCase()
+                )}
+              </button>
+
+              {profileOpen && (
+                <div className="absolute right-0 mt-2 w-52 bg-dark-850 border border-slate-700/60 rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in p-1.5 text-left">
+                  <div className="px-3 py-2 flex items-center gap-2">
+                    {user?.avatar ? (
+                      <img
+                        src={getAvatarUrl(user.avatar)}
+                        alt={user.name}
+                        className="w-7 h-7 rounded-full object-cover border border-primary-500/20"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-primary-700 text-white font-bold text-xs flex items-center justify-center">
+                        {user?.name?.[0]?.toUpperCase()}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-white truncate">{user?.name}</p>
+                      <p className="text-[9px] text-slate-500 capitalize leading-none mt-0.5">
+                        {user?.role === 'member' ? 'Employee' : user?.role === 'manager' ? 'Project Manager' : 'Admin'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="border-t border-slate-700/40 my-1" />
+                  
+                  <Link
+                    to="/profile"
+                    onClick={() => setProfileOpen(false)}
+                    className="block w-full text-left text-xs text-slate-300 hover:text-white px-3 py-2 hover:bg-dark-700/50 rounded-lg transition-colors font-medium animate-none"
+                  >
+                    Profile
+                  </Link>
+                  
+                  <button
+                    onClick={() => {
+                      setProfileOpen(false)
+                      logout()
+                    }}
+                    className="w-full text-left text-xs text-red-400 hover:text-red-300 px-3 py-2 hover:bg-red-950/20 rounded-lg transition-colors mt-0.5 flex items-center gap-1.5 font-medium cursor-pointer"
+                  >
+                    <AiOutlineLogout size={14} /> Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 

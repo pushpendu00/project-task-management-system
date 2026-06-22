@@ -222,34 +222,11 @@ const TaskDetailPage = () => {
     setIsEditingDesc(false)
   }
 
-  const handleFileChange = async (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
-
-    try {
-      setUploadingFile(true)
-      const formData = new FormData()
-      formData.append('file', file)
-
-      const { data } = await api.post('/uploads', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
-
-      if (data.success) {
-        setSelectedFile(data.file)
-        toast.success(`Uploaded: ${file.name}`)
-      } else {
-        toast.error('Failed to upload file')
-      }
-    } catch (error) {
-      console.error(error)
-      toast.error(error.response?.data?.message || 'File upload failed')
-    } finally {
-      setUploadingFile(false)
-      e.target.value = ''
-    }
+    setSelectedFile(file)
+    e.target.value = ''
   }
 
   const handleAddComment = async (e) => {
@@ -257,11 +234,40 @@ const TaskDetailPage = () => {
     if (!newComment.trim() && !selectedFile) return
     try {
       setAddingComment(true)
+      
+      let uploadedFileData = null
+      if (selectedFile) {
+        setUploadingFile(true)
+        try {
+          const formData = new FormData()
+          formData.append('file', selectedFile)
+
+          const { data } = await api.post('/uploads', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          })
+
+          if (data.success) {
+            uploadedFileData = data.file
+          } else {
+            toast.error('Failed to upload file')
+            return
+          }
+        } catch (error) {
+          console.error(error)
+          toast.error(error.response?.data?.message || 'File upload failed')
+          return
+        } finally {
+          setUploadingFile(false)
+        }
+      }
+
       const commentPayload = {
         text: newComment,
-        attachmentUrl: selectedFile?.url || null,
-        attachmentName: selectedFile?.name || null,
-        attachmentType: selectedFile?.type || null,
+        attachmentUrl: uploadedFileData?.url || null,
+        attachmentName: uploadedFileData?.name || null,
+        attachmentType: uploadedFileData?.type || null,
         replyTo: replyingTo?._id || null,
         replyToUser: replyingTo?.userName || null,
         replyToText: replyingTo ? (replyingTo.text || replyingTo.attachmentName || 'Attachment') : null
@@ -270,6 +276,10 @@ const TaskDetailPage = () => {
       setNewComment('')
       setSelectedFile(null)
       setReplyingTo(null)
+      const textarea = document.getElementById('comment-input')
+      if (textarea) {
+        textarea.style.height = '30px'
+      }
     } finally {
       setAddingComment(false)
     }
@@ -666,15 +676,11 @@ const TaskDetailPage = () => {
                   )}
 
                   <form onSubmit={handleAddComment} className="flex gap-2 items-end">
-                    <div className="w-6 h-6 rounded-full bg-primary-700 text-white flex items-center justify-center font-bold text-[9px] flex-shrink-0 mb-1">
-                      {user?.name?.[0]?.toUpperCase()}
-                    </div>
-                    
                     <button
                       type="button"
                       disabled={uploadingFile}
                       onClick={() => fileInputRef.current?.click()}
-                      className="bg-dark-800 hover:bg-dark-750 text-slate-400 hover:text-white border border-slate-700/50 p-1.5 rounded transition-colors mb-1"
+                      className="bg-dark-800 hover:bg-dark-750 text-slate-400 hover:text-white border border-slate-700/50 p-1.5 rounded transition-colors mb-1 flex-shrink-0"
                       title="Attach file, image, or document"
                     >
                       <AiOutlinePaperClip size={12} />
@@ -690,22 +696,34 @@ const TaskDetailPage = () => {
                       <textarea
                         rows={1}
                         value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
+                        onChange={(e) => {
+                          setNewComment(e.target.value)
+                          e.target.style.height = 'auto'
+                          e.target.style.height = `${Math.min(e.target.scrollHeight, 100)}px`
+                        }}
                         placeholder="Type a message or attach a file..."
-                        className="w-full text-xs bg-transparent border-none focus:ring-0 p-1 min-h-[30px] max-h-[70px] resize-none text-slate-200 placeholder-slate-500"
+                        className="w-full text-xs bg-transparent border-none focus:ring-0 p-1 min-h-[30px] max-h-[100px] overflow-y-auto text-slate-200 placeholder-slate-500 resize-none"
                         style={{ outline: 'none', boxShadow: 'none' }}
                         id="comment-input"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleAddComment(e);
+                            e.preventDefault()
+                            handleAddComment(e)
                           }
                         }}
                       />
                     </div>
-                    <Button type="submit" variant="primary" size="xs" loading={addingComment} className="flex-shrink-0 py-1 px-2.5 mb-0.5">
-                      Send
-                    </Button>
+                    
+                    <button
+                      type="submit"
+                      disabled={addingComment}
+                      className="flex-shrink-0 bg-primary-600 hover:bg-primary-500 text-white p-2 rounded-lg transition-colors flex items-center justify-center mb-0.5 cursor-pointer disabled:opacity-50"
+                      title="Send Message"
+                    >
+                      <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 1024 1024" className="w-3.5 h-3.5" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M931.4 498.9L94.9 79.5c-3.4-1.7-7.3-2.1-11-1.2-8.5 2.1-13.8 10.7-11.7 19.3l86.2 352.2c1.3 5.3 5.2 9.6 10.4 11.3l224.4 72.9-224.4 72.9c-5.2 1.7-9.1 6-10.4 11.3L72.2 868.3c-2.1 8.5 3.2 17.2 11.7 19.3 3.7.9 7.6.5 11-1.2l836.5-419.4c7.9-4 10.9-13.7 7-21.6a15.7 15.7 0 0 0-7-6.5z"></path>
+                      </svg>
+                    </button>
                   </form>
                 </div>
               </div>

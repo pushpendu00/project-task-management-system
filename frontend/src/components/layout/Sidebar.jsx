@@ -4,11 +4,19 @@ import { useRecoilValue } from 'recoil'
 import {
   AiOutlineDashboard, AiOutlineProject,
   AiOutlineCheckSquare, AiOutlineMenu, AiOutlineClose,
-  AiOutlineTeam, AiOutlinePieChart, AiOutlineBell
+  AiOutlineTeam, AiOutlinePieChart, AiOutlineBell, AiOutlineUser
 } from 'react-icons/ai'
 import useAuth from '../../hooks/useAuth'
 import api from '../../api/axios'
 import { notificationsAtom } from '../../recoil/atoms/notificationAtom'
+
+const getAvatarUrl = (path) => {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  const host = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase
+  return `${host}${path}`
+}
 
 const Sidebar = ({ isOpen, onClose }) => {
   const [collapsed, setCollapsed] = useState(false)
@@ -29,6 +37,12 @@ const Sidebar = ({ isOpen, onClose }) => {
   } else if (user?.role === 'manager') {
     links.push({ to: '/tasks', label: 'Project Tasks', icon: AiOutlineCheckSquare })
     links.push({ to: '/reports', label: 'Project Reports', icon: AiOutlinePieChart })
+    links.push({
+      to: '/notifications',
+      label: 'Notifications',
+      icon: AiOutlineBell,
+      count: unreadCount,
+    })
   } else if (user?.role === 'member') {
     links.push({ to: '/tasks', label: 'My Tasks', icon: AiOutlineCheckSquare })
     links.push({
@@ -38,6 +52,8 @@ const Sidebar = ({ isOpen, onClose }) => {
       count: unreadCount,
     })
   }
+
+  links.push({ to: '/profile', label: 'Profile', icon: AiOutlineUser })
 
   return (
     <>
@@ -114,8 +130,16 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* User */}
         <div className="p-3 border-t border-slate-700/50 flex-shrink-0">
           <div className={`flex items-center gap-3 px-2 py-2 rounded-lg ${collapsed ? 'justify-center' : ''}`}>
-            <div className="w-8 h-8 rounded-full bg-primary-600 text-white font-bold text-sm flex items-center justify-center flex-shrink-0">
-              {user?.name?.[0]?.toUpperCase() || 'U'}
+            <div className="w-8 h-8 rounded-full bg-primary-600 text-white font-bold text-sm flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {user?.avatar ? (
+                <img
+                  src={getAvatarUrl(user.avatar)}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                user?.name?.[0]?.toUpperCase() || 'U'
+              )}
             </div>
             {!collapsed && (
               <div className="flex-1 min-w-0">

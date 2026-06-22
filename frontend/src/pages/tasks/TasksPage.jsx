@@ -3,40 +3,40 @@ import { useNavigate } from 'react-router-dom'
 import { useRecoilValue, useRecoilState } from 'recoil'
 import { AiOutlinePlus, AiOutlineAppstore, AiOutlineUnorderedList } from 'react-icons/ai'
 import { filteredTasksSelector } from '../../recoil/selectors/taskSelectors'
-import { taskFilterAtom }        from '../../recoil/atoms/taskAtom'
-import useTasks  from '../../hooks/useTasks'
-import useAuth   from '../../hooks/useAuth'
-import api       from '../../api/axios'
-import TaskCard  from '../../components/task/TaskCard'
-import TaskForm  from '../../components/task/TaskForm'
-import Modal     from '../../components/common/Modal'
-import Button    from '../../components/common/Button'
-import Spinner   from '../../components/common/Spinner'
-import Badge     from '../../components/common/Badge'
+import { taskFilterAtom } from '../../recoil/atoms/taskAtom'
+import useTasks from '../../hooks/useTasks'
+import useAuth from '../../hooks/useAuth'
+import api from '../../api/axios'
+import TaskCard from '../../components/task/TaskCard'
+import TaskForm from '../../components/task/TaskForm'
+import Modal from '../../components/common/Modal'
+import Button from '../../components/common/Button'
+import Spinner from '../../components/common/Spinner'
+import Badge from '../../components/common/Badge'
 
-const STATUS_OPTIONS   = ['', 'todo', 'in-progress', 'in-review', 'completed', 'blocked']
+const STATUS_OPTIONS = ['', 'todo', 'in-progress', 'in-review', 'completed', 'blocked']
 const PRIORITY_OPTIONS = ['', 'low', 'medium', 'high', 'critical']
 
 const TasksPage = () => {
-  const navigate            = useNavigate()
-  const tasks               = useRecoilValue(filteredTasksSelector)
+  const navigate = useNavigate()
+  const tasks = useRecoilValue(filteredTasksSelector)
   const [filter, setFilter] = useRecoilState(taskFilterAtom)
   const { fetchTasks, createTask, loading, selectedTask, setSelectedTask } = useTasks()
-  const { user }            = useAuth()
-  const [isModalOpen, setIsModalOpen]       = useState(false)
-  const [projects, setProjects]             = useState([])
-  const [users, setUsers]                   = useState([])
-  const [viewMode, setViewMode]             = useState('grid')
+  const { user } = useAuth()
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [projects, setProjects] = useState([])
+  const [users, setUsers] = useState([])
+  const [viewMode, setViewMode] = useState('grid')
 
   useEffect(() => {
     fetchTasks()
     if (user?.role !== 'member') {
       api.get('/projects')
         .then(({ data }) => setProjects(data.projects || []))
-        .catch(() => {})
+        .catch(() => { })
       api.get('/users')
         .then(({ data }) => setUsers(data.users || []))
-        .catch(() => {})
+        .catch(() => { })
     }
   }, [user]) // eslint-disable-line
 
@@ -78,17 +78,17 @@ const TasksPage = () => {
 
       <div className="flex gap-3 mb-6 flex-wrap">
         <select className="input w-auto text-sm bg-dark-800" value={filter.status}
-                onChange={(e) => setFilter((p) => ({ ...p, status: e.target.value }))} id="filter-status">
+          onChange={(e) => setFilter((p) => ({ ...p, status: e.target.value }))} id="filter-status">
           {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s ? s.replace(/-/g, ' ') : 'All Statuses'}</option>)}
         </select>
         <select className="input w-auto text-sm bg-dark-800" value={filter.priority}
-                onChange={(e) => setFilter((p) => ({ ...p, priority: e.target.value }))} id="filter-priority">
+          onChange={(e) => setFilter((p) => ({ ...p, priority: e.target.value }))} id="filter-priority">
           {PRIORITY_OPTIONS.map((p) => <option key={p} value={p}>{p || 'All Priorities'}</option>)}
         </select>
 
         {user?.role !== 'member' && projects.length > 0 && (
           <select className="input w-auto text-sm bg-dark-800" value={filter.project || ''}
-                  onChange={(e) => setFilter((p) => ({ ...p, project: e.target.value }))} id="filter-project">
+            onChange={(e) => setFilter((p) => ({ ...p, project: e.target.value }))} id="filter-project">
             <option value="">All Projects</option>
             {projects.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
           </select>
@@ -96,7 +96,7 @@ const TasksPage = () => {
 
         {user?.role !== 'member' && users.length > 0 && (
           <select className="input w-auto text-sm bg-dark-800" value={filter.assignedTo || ''}
-                  onChange={(e) => setFilter((p) => ({ ...p, assignedTo: e.target.value }))} id="filter-assignee">
+            onChange={(e) => setFilter((p) => ({ ...p, assignedTo: e.target.value }))} id="filter-assignee">
             <option value="">All Assignees</option>
             {users.map((u) => <option key={u._id} value={u._id}>{u.name}</option>)}
           </select>
@@ -104,7 +104,7 @@ const TasksPage = () => {
 
         {(filter.status || filter.priority || filter.project || filter.assignedTo) && (
           <Button variant="ghost" size="sm"
-                  onClick={() => setFilter({ status: '', priority: '', assignedTo: '', project: '' })} id="clear-filters-btn">
+            onClick={() => setFilter({ status: '', priority: '', assignedTo: '', project: '' })} id="clear-filters-btn">
             Clear Filters
           </Button>
         )}
@@ -115,7 +115,7 @@ const TasksPage = () => {
       ) : tasks.length === 0 ? (
         <div className="card p-12 text-center text-slate-500">No tasks found.</div>
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-fade-in">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 animate-fade-in">
           {tasks.map((task) => (
             <TaskCard key={task._id} task={task} onClick={(t) => navigate(`/tasks/${t._id}`)} />
           ))}

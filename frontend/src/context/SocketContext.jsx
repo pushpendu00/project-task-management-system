@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { io } from 'socket.io-client'
 import { useRecoilState } from 'recoil'
 import { notificationsAtom } from '../recoil/atoms/notificationAtom'
@@ -18,6 +18,7 @@ export const SocketProvider = ({ children }) => {
   const [notifications, setNotifications] = useRecoilState(notificationsAtom)
   const [selectedTask, setSelectedTask] = useRecoilState(selectedTaskAtom)
   const navigate = useNavigate()
+  const notifToastIdsRef = useRef([])
 
   useEffect(() => {
     if (!token || !user) {
@@ -51,40 +52,69 @@ export const SocketProvider = ({ children }) => {
         // Prepend to recoil notifications state
         setNotifications((prev) => [newNotification, ...prev])
 
-        // Trigger toast alert with deep link redirect
-        toast((t) => (
-          <div 
-            onClick={async () => {
-              toast.dismiss(t.id)
-              // Mark as read in backend and update recoil locally
-              try {
-                setNotifications((prev) =>
-                  prev.map((n) => (n._id === newNotification._id ? { ...n, isRead: true } : n))
-                )
-                await api.put(`/notifications/${newNotification._id}/read`)
-              } catch (err) {
-                console.error('Failed to mark notification as read:', err)
-              }
-              if (newNotification.relatedLink) {
-                navigate(newNotification.relatedLink)
-              }
-            }}
-            className="cursor-pointer font-sans"
-          >
-            <div className="font-semibold text-xs text-white">New Notification</div>
-            <div className="text-[11px] text-slate-300 mt-0.5 hover:underline">{newNotification.message}</div>
+        // Dismiss oldest if we already have 3 visible notification toasts
+        if (notifToastIdsRef.current.length >= 3) {
+          const oldestId = notifToastIdsRef.current.shift()
+          toast.dismiss(oldestId)
+        }
+
+        const newToastId = toast((t) => (
+          <div className="flex items-start gap-2.5 font-sans w-full pr-5 relative">
+            <div 
+              onClick={async () => {
+                toast.dismiss(t.id)
+                notifToastIdsRef.current = notifToastIdsRef.current.filter((id) => id !== t.id)
+                // Mark as read in backend and update recoil locally
+                try {
+                  setNotifications((prev) =>
+                    prev.map((n) => (n._id === newNotification._id ? { ...n, isRead: true } : n))
+                  )
+                  await api.put(`/notifications/${newNotification._id}/read`)
+                } catch (err) {
+                  console.error('Failed to mark notification as read:', err)
+                }
+                if (newNotification.relatedLink) {
+                  navigate(newNotification.relatedLink)
+                }
+              }}
+              className="cursor-pointer flex-1"
+            >
+              <div className="font-semibold text-xs text-white">New Notification</div>
+              <div className="text-[11px] text-slate-350 mt-0.5 hover:underline break-words">{newNotification.message}</div>
+            </div>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                toast.dismiss(t.id)
+                notifToastIdsRef.current = notifToastIdsRef.current.filter((id) => id !== t.id)
+              }}
+              className="absolute top-0 right-0 p-0.5 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded transition-colors text-[10px] leading-none"
+            >
+              ✕
+            </button>
           </div>
         ), {
           icon: '🔔',
-          duration: 6000,
+          duration: 5000,
+          position: 'bottom-right',
           style: {
             background: '#1e293b',
             color: '#f8fafc',
             border: '1px solid #334155',
-            padding: '8px 12px',
+            padding: '10px 14px',
             borderRadius: '8px',
+            minWidth: '280px',
+            maxWidth: '340px',
           }
         })
+
+        notifToastIdsRef.current.push(newToastId)
+        // Clean up from tracking array when toast expires/dismisses naturally
+        setTimeout(() => {
+          notifToastIdsRef.current = notifToastIdsRef.current.filter((id) => id !== newToastId)
+        }, 5100)
       } else if (type === 'message') {
         // Real-time comments
         setSelectedTask((prev) => {
