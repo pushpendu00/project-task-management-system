@@ -4,14 +4,14 @@ import { Link } from 'react-router-dom'
 import { AiOutlinePlus, AiOutlineSearch, AiOutlineAppstore, AiOutlineUnorderedList, AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai'
 import { projectsAtom } from '../../recoil/atoms/projectAtom'
 import useProjects from '../../hooks/useProjects'
-import useAuth     from '../../hooks/useAuth'
+import useAuth from '../../hooks/useAuth'
 import ProjectCard from '../../components/project/ProjectCard'
 import ProjectForm from '../../components/project/ProjectForm'
-import Modal   from '../../components/common/Modal'
-import Button  from '../../components/common/Button'
+import Modal from '../../components/common/Modal'
+import Button from '../../components/common/Button'
 import Spinner from '../../components/common/Spinner'
-import Badge   from '../../components/common/Badge'
-import Select  from '../../components/common/Select'
+import Badge from '../../components/common/Badge'
+import Select from '../../components/common/Select'
 import { formatDate } from '../../utils/formatDate'
 import ConfirmModal from '../../components/common/ConfirmModal'
 
@@ -19,13 +19,13 @@ const ProjectsPage = () => {
   const projects = useRecoilValue(projectsAtom)
   const { fetchProjects, createProject, updateProject, deleteProject, loading } = useProjects()
   const { user } = useAuth()
-  const [isModalOpen,    setIsModalOpen]    = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingProject, setEditingProject] = useState(null)
-  const [search,         setSearch]         = useState('')
-  const [statusFilter,   setStatusFilter]   = useState('')
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('')
-  const [sortOrder,      setSortOrder]      = useState('created-desc')
-  const [viewMode,       setViewMode]       = useState(() => {
+  const [sortOrder, setSortOrder] = useState('created-desc')
+  const [viewMode, setViewMode] = useState(() => {
     return localStorage.getItem('projectsViewMode') || 'grid'
   })
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
@@ -39,7 +39,7 @@ const ProjectsPage = () => {
 
   const handleSubmit = async (data) => {
     if (editingProject) await updateProject(editingProject._id, data)
-    else                await createProject(data)
+    else await createProject(data)
     setIsModalOpen(false)
     setEditingProject(null)
   }
@@ -59,9 +59,9 @@ const ProjectsPage = () => {
 
   const filtered = projects
     .filter((p) => {
-      const term = search.toLowerCase()
+      const term = search?.toLowerCase()
       const matchesSearch =
-        p.name.toLowerCase().includes(term) ||
+        p.name?.toLowerCase().includes(term) ||
         p.description?.toLowerCase().includes(term) ||
         p.assignedManager?.name?.toLowerCase().includes(term)
 
@@ -319,9 +319,9 @@ const ProjectsPage = () => {
       )}
 
       <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingProject(null) }}
-             title={editingProject ? 'Edit Project' : 'Create New Project'}>
+        title={editingProject ? 'Edit Project' : 'Create New Project'}>
         <ProjectForm initialData={editingProject || {}} onSubmit={handleSubmit}
-                     loading={loading} onCancel={() => { setIsModalOpen(false); setEditingProject(null) }} />
+          loading={loading} onCancel={() => { setIsModalOpen(false); setEditingProject(null) }} />
       </Modal>
 
       <ConfirmModal

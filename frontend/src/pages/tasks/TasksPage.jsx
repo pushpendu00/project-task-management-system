@@ -42,7 +42,7 @@ const TasksPage = () => {
 
   const processedTasks = [...tasks]
     .filter((task) => {
-      const term = searchTerm.toLowerCase()
+      const term = searchTerm?.toLowerCase()
       return (
         task.title?.toLowerCase().includes(term) ||
         task.description?.toLowerCase().includes(term) ||

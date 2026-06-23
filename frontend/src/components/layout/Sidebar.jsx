@@ -20,14 +20,14 @@ const getAvatarUrl = (path) => {
 
 const Sidebar = ({ isOpen, onClose }) => {
   const [collapsed, setCollapsed] = useState(false)
-  const { user, logout }          = useAuth()
-  const notifications             = useRecoilValue(notificationsAtom)
-  const unreadCount               = notifications.filter(n => !n.isRead).length
+  const { user, logout } = useAuth()
+  const notifications = useRecoilValue(notificationsAtom)
+  const unreadCount = notifications.filter(n => !n.isRead).length
 
   // Build role-based links
   const links = [
     { to: '/dashboard', label: 'Dashboard', icon: AiOutlineDashboard },
-    { to: '/projects',  label: 'Projects',  icon: AiOutlineProject },
+    { to: '/projects', label: 'Projects', icon: AiOutlineProject },
   ]
 
   if (user?.role === 'admin') {
@@ -101,7 +101,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             <NavLink
               key={to}
               to={to}
-              id={`nav-${label.toLowerCase().replace(/\s+/g, '-')}`}
+              id={`nav-${label?.toLowerCase().replace(/\s+/g, '-')}`}
               className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
               onClick={onClose}
             >

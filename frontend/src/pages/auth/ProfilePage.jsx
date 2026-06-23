@@ -315,7 +315,7 @@ const ProfilePage = () => {
   }
 
   const filteredCountries = COUNTRIES.filter((c) =>
-    c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+    c.name?.toLowerCase().includes(countrySearch?.toLowerCase()) ||
     c.code.includes(countrySearch)
   )
 
@@ -467,8 +467,8 @@ const ProfilePage = () => {
                                 setCountrySearch('')
                               }}
                               className={`w-full text-left px-2.5 py-1.5 rounded text-xs transition-colors flex items-center justify-between ${phoneCountry === c.code
-                                  ? 'bg-primary-600/20 text-primary-400 font-medium'
-                                  : 'text-slate-350 hover:bg-slate-800 hover:text-slate-100'
+                                ? 'bg-primary-600/20 text-primary-400 font-medium'
+                                : 'text-slate-350 hover:bg-slate-800 hover:text-slate-100'
                                 }`}
                             >
                               <span className="truncate mr-2">{c.name}</span>

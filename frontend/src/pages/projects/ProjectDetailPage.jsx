@@ -115,7 +115,7 @@ const ProjectDetailPage = () => {
   const isOwner = project.owner?._id === user?._id || project.owner === user?._id;
   const isAssignedPM = project.assignedManager?._id === user?._id || project.assignedManager === user?._id;
   const isTeamManager = project.members?.some((m) => (m.user?._id || m.user) === user?._id && m.role === 'manager');
-  
+
   const isOwnerOrAdmin = user?.role === 'admin' || isOwner;
   const canManageMembers = isOwnerOrAdmin || isAssignedPM || isTeamManager;
   const canCreateTask = user?.role === 'admin' || isOwner || isAssignedPM || isTeamManager;
@@ -139,8 +139,8 @@ const ProjectDetailPage = () => {
 
   const searchedUsers = availableUsers.filter(
     (u) =>
-      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase())
+      u.name?.toLowerCase().includes(searchQuery?.toLowerCase()) ||
+      u.email?.toLowerCase().includes(searchQuery?.toLowerCase())
   )
 
   return (
@@ -172,7 +172,7 @@ const ProjectDetailPage = () => {
               )}
             </div>
           </div>
-          
+
           {/* Right: Toggle & Action Buttons */}
           <div className="flex flex-wrap items-center gap-2.5">
             <div className="flex bg-dark-900 border border-slate-700/50 rounded-lg p-0.5">
@@ -191,9 +191,9 @@ const ProjectDetailPage = () => {
                 <AiOutlineUnorderedList size={14} /> List
               </button>
             </div>
-            
+
             <div className="hidden sm:block h-4 w-px bg-slate-700/60" />
-            
+
             <div className="flex gap-2">
               {canEditProject && (
                 <Button

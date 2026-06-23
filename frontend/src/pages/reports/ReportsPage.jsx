@@ -59,7 +59,7 @@ const ReportsPage = () => {
   }, [])
 
   const filteredProjects = projectsList
-    .filter(p => p.name.toLowerCase().includes(projectSearch.toLowerCase()))
+    .filter(p => p.name?.toLowerCase().includes(projectSearch?.toLowerCase()))
     .slice(0, 5) // max latest 5 projects
 
   // Fetch list of projects for dropdown selection
@@ -215,11 +215,10 @@ const ReportsPage = () => {
                               setProjectDropdownOpen(false)
                               setProjectSearch('')
                             }}
-                            className={`w-full text-left px-2.5 py-1.5 rounded text-xs transition-colors flex items-center justify-between ${
-                              selectedProjectId === p._id
+                            className={`w-full text-left px-2.5 py-1.5 rounded text-xs transition-colors flex items-center justify-between ${selectedProjectId === p._id
                                 ? 'bg-primary-600/20 text-primary-400 font-medium'
                                 : 'text-slate-350 hover:bg-slate-800 hover:text-slate-100'
-                            }`}
+                              }`}
                           >
                             <span className="truncate">{p.name}</span>
                           </button>
@@ -279,9 +278,9 @@ const ReportsPage = () => {
                             <div className="w-full bg-dark-900 rounded-full h-2">
                               <div
                                 className={`h-2 rounded-full ${status === 'completed' ? 'bg-green-500' :
-                                    status === 'blocked' ? 'bg-red-500' :
-                                      status === 'in-progress' ? 'bg-blue-500' :
-                                        status === 'in-review' ? 'bg-yellow-500' : 'bg-slate-500'
+                                  status === 'blocked' ? 'bg-red-500' :
+                                    status === 'in-progress' ? 'bg-blue-500' :
+                                      status === 'in-review' ? 'bg-yellow-500' : 'bg-slate-500'
                                   }`}
                                 style={{ width: `${projectReport.totalTasks > 0 ? (count / projectReport.totalTasks) * 100 : 0}%` }}
                               />
@@ -306,8 +305,8 @@ const ReportsPage = () => {
                             <div className="w-full bg-dark-900 rounded-full h-2">
                               <div
                                 className={`h-2 rounded-full ${priority === 'critical' ? 'bg-red-600' :
-                                    priority === 'high' ? 'bg-orange-500' :
-                                      priority === 'medium' ? 'bg-blue-500' : 'bg-slate-500'
+                                  priority === 'high' ? 'bg-orange-500' :
+                                    priority === 'medium' ? 'bg-blue-500' : 'bg-slate-500'
                                   }`}
                                 style={{ width: `${projectReport.totalTasks > 0 ? (count / projectReport.totalTasks) * 100 : 0}%` }}
                               />
@@ -417,7 +416,7 @@ const ReportsPage = () => {
                           </td>
                           <td className="py-3 px-6 capitalize">
                             <span className="font-semibold text-primary-400 bg-primary-950/20 px-2 py-0.5 rounded">
-                              {log.action.replace(/_/g, ' ').toLowerCase()}
+                              {log.action.replace(/_/g, ' ')?.toLowerCase()}
                             </span>
                           </td>
                           <td className="py-3 px-6 font-semibold">{log.entity}</td>

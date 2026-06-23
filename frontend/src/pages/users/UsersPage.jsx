@@ -146,8 +146,8 @@ const UsersPage = () => {
   }
 
   const filteredUsers = users.filter(u =>
-    u.name.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase())
+    u.name?.toLowerCase().includes(search?.toLowerCase()) ||
+    u.email?.toLowerCase().includes(search?.toLowerCase())
   )
 
   return (
@@ -216,8 +216,8 @@ const UsersPage = () => {
                     </td>
                     <td className="py-4 px-6 capitalize">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${u.role === 'admin' ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-400 border border-primary-200 dark:border-primary-800/40' :
-                          u.role === 'manager' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/40' :
-                            'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40'
+                        u.role === 'manager' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/40' :
+                          'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40'
                         }`}>
                         {u.role === 'member' ? 'employee' : u.role}
                       </span>

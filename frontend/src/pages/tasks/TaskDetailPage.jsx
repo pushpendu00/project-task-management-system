@@ -90,7 +90,7 @@ const getHistoryMessage = (log) => {
       return (
         <span>
           <strong className="text-slate-100">{userName}</strong> performed action{' '}
-          <span className="text-primary-600 dark:text-primary-400 capitalize">{action.replace(/_/g, ' ').toLowerCase()}</span>
+          <span className="text-primary-600 dark:text-primary-400 capitalize">{action.replace(/_/g, ' ')?.toLowerCase()}</span>
         </span>
       )
   }
@@ -118,7 +118,7 @@ const TaskDetailPage = () => {
   const [isEditingDesc, setIsEditingDesc] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
   const [editedDesc, setEditedDesc] = useState('')
-  
+
   // Comments
   const [newComment, setNewComment] = useState('')
   const [addingComment, setAddingComment] = useState(false)
@@ -244,7 +244,7 @@ const TaskDetailPage = () => {
     if (!newComment.trim() && !selectedFile) return
     try {
       setAddingComment(true)
-      
+
       let uploadedFileData = null
       if (selectedFile) {
         setUploadingFile(true)
@@ -390,7 +390,7 @@ const TaskDetailPage = () => {
     if (activeTab === 'details') {
       const isNewMessage = filteredFeed.length !== lastFeedLength.current
       lastFeedLength.current = filteredFeed.length
-      
+
       const timer = setTimeout(() => {
         if (isNewMessage) {
           chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -400,7 +400,7 @@ const TaskDetailPage = () => {
           }
         }
       }, 50)
-      
+
       return () => clearTimeout(timer)
     }
   }, [filteredFeed.length, activeTab])
@@ -417,8 +417,8 @@ const TaskDetailPage = () => {
   const isAssignee = selectedTask.assignedTo?._id === user?._id
   const isAdmin = user?.role === 'admin'
   const isPM = (selectedTask.project?.owner?._id || selectedTask.project?.owner) === user?._id ||
-               (selectedTask.project?.assignedManager?._id || selectedTask.project?.assignedManager) === user?._id ||
-               selectedTask.project?.members?.some(m => (m.user?._id || m.user) === user?._id && m.role === 'manager')
+    (selectedTask.project?.assignedManager?._id || selectedTask.project?.assignedManager) === user?._id ||
+    selectedTask.project?.members?.some(m => (m.user?._id || m.user) === user?._id && m.role === 'manager')
   const isProjectMember = selectedTask.project?.members?.some(m => (m.user?._id || m.user) === user?._id)
   const canEditAssigneeAndTimeline = isAdmin || isPM || isProjectMember
 
@@ -447,9 +447,8 @@ const TaskDetailPage = () => {
               />
             ) : (
               <h2
-                className={`text-xs font-semibold text-slate-100 flex items-center gap-1 group truncate ${
-                  isAdmin || isPM ? 'cursor-pointer hover:text-primary-400' : ''
-                }`}
+                className={`text-xs font-semibold text-slate-100 flex items-center gap-1 group truncate ${isAdmin || isPM ? 'cursor-pointer hover:text-primary-400' : ''
+                  }`}
                 onClick={() => {
                   if (isAdmin || isPM) {
                     setEditedTitle(selectedTask.title)
@@ -474,17 +473,15 @@ const TaskDetailPage = () => {
             <div className="flex border-b border-slate-700/30 flex-shrink-0 gap-4 mb-2.5">
               <button
                 onClick={() => setActiveTab('details')}
-                className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b-2 transition-all ${
-                  activeTab === 'details' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
+                className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b-2 transition-all ${activeTab === 'details' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
               >
                 Details & Activity
               </button>
               <button
                 onClick={() => setActiveTab('worklogs')}
-                className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b-2 transition-all ${
-                  activeTab === 'worklogs' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
+                className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b-2 transition-all ${activeTab === 'worklogs' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
               >
                 Work Logs
               </button>
@@ -511,7 +508,7 @@ const TaskDetailPage = () => {
 
                 {/* Scrolling Chat list wrapper */}
                 <div className="flex-1 min-h-0 relative flex flex-col">
-                  <div 
+                  <div
                     ref={chatContainerRef}
                     onScroll={handleScroll}
                     className="flex-1 overflow-y-auto space-y-2 pr-1.5 bg-dark-950/20 rounded-lg p-2.5 border border-slate-800/40 min-h-[160px]"
@@ -521,9 +518,9 @@ const TaskDetailPage = () => {
                         if (item.feedType === 'comment') {
                           const isCurrentUser = item.user?._id?.toString() === user?._id?.toString();
                           return (
-                            <div 
-                              key={item._id} 
-                              id={`comment-row-${item._id}`} 
+                            <div
+                              key={item._id}
+                              id={`comment-row-${item._id}`}
                               className="w-full transition-all duration-500 rounded p-1"
                             >
                               <div className={`flex items-start gap-2 group max-w-[85%] ${isCurrentUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}>
@@ -538,16 +535,15 @@ const TaskDetailPage = () => {
                                     getInitials(item.user?.name) || 'U'
                                   )}
                                 </div>
-                                <div 
+                                <div
                                   id={`comment-${item._id}`}
-                                  className={`p-2 rounded-lg border transition-all duration-350 ${
-                                    isCurrentUser 
-                                      ? 'bg-primary-600 dark:bg-primary-900 border-primary-500/30 dark:border-primary-700/50 text-white rounded-tr-none' 
+                                  className={`p-2 rounded-lg border transition-all duration-350 ${isCurrentUser
+                                      ? 'bg-primary-600 dark:bg-primary-900 border-primary-500/30 dark:border-primary-700/50 text-white rounded-tr-none'
                                       : 'bg-dark-800/80 border-slate-700/30 text-slate-300 rounded-tl-none'
-                                  }`}
+                                    }`}
                                 >
                                   {item.replyTo && (
-                                    <div 
+                                    <div
                                       onClick={() => {
                                         const element = document.getElementById(`comment-row-${item.replyTo}`);
                                         if (element) {
@@ -558,11 +554,10 @@ const TaskDetailPage = () => {
                                           }, 3000);
                                         }
                                       }}
-                                      className={`mb-1.5 p-1.5 rounded border-l-2 cursor-pointer transition-colors max-w-full text-[10px] ${
-                                        isCurrentUser
+                                      className={`mb-1.5 p-1.5 rounded border-l-2 cursor-pointer transition-colors max-w-full text-[10px] ${isCurrentUser
                                           ? 'bg-black/30 border-white/40 text-white/80 hover:bg-black/45'
                                           : 'bg-dark-950/40 border-primary-500 text-slate-400 hover:bg-dark-950/60'
-                                      }`}
+                                        }`}
                                     >
                                       <div className={`font-bold text-[8px] ${isCurrentUser ? 'text-primary-300' : 'text-primary-400'}`}>@{item.replyToUser}</div>
                                       <div className={`truncate max-w-[180px] text-[9px] mt-0.5 ${isCurrentUser ? 'text-white/60' : 'text-slate-450'}`}>
@@ -582,9 +577,8 @@ const TaskDetailPage = () => {
                                           href={getAttachmentUrl(item.attachmentUrl)}
                                           target="_blank"
                                           rel="noopener noreferrer"
-                                          className={`block max-w-[200px] overflow-hidden rounded border hover:opacity-90 transition-opacity ${
-                                            isCurrentUser ? 'border-white/20' : 'border-slate-700/50'
-                                          }`}
+                                          className={`block max-w-[200px] overflow-hidden rounded border hover:opacity-90 transition-opacity ${isCurrentUser ? 'border-white/20' : 'border-slate-700/50'
+                                            }`}
                                         >
                                           <img
                                             src={getAttachmentUrl(item.attachmentUrl)}
@@ -597,11 +591,10 @@ const TaskDetailPage = () => {
                                           href={getAttachmentUrl(item.attachmentUrl)}
                                           target="_blank"
                                           rel="noopener noreferrer"
-                                          className={`inline-flex items-center gap-1.5 p-1 px-2 rounded border text-[10px] transition-colors font-medium max-w-full ${
-                                            isCurrentUser
+                                          className={`inline-flex items-center gap-1.5 p-1 px-2 rounded border text-[10px] transition-colors font-medium max-w-full ${isCurrentUser
                                               ? 'bg-black/30 border-white/10 text-primary-300 hover:bg-black/45 hover:text-primary-200'
                                               : 'bg-dark-900/60 hover:bg-dark-950 border-slate-800/80 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-350'
-                                          }`}
+                                            }`}
                                         >
                                           <AiOutlinePaperClip size={11} className="flex-shrink-0" />
                                           <span className="truncate max-w-[120px]">{item.attachmentName || 'Attachment'}</span>
@@ -610,7 +603,7 @@ const TaskDetailPage = () => {
                                     </div>
                                   )}
                                 </div>
-  
+
                                 {/* Reply Action Button */}
                                 <button
                                   type="button"
@@ -742,7 +735,7 @@ const TaskDetailPage = () => {
                         }}
                       />
                     </div>
-                    
+
                     <button
                       type="submit"
                       disabled={addingComment}
@@ -950,9 +943,8 @@ const TaskDetailPage = () => {
                   </div>
                 ) : (
                   <div
-                    className={`text-[11px] text-slate-400 whitespace-pre-wrap p-2 rounded bg-dark-900/40 border border-slate-800/80 min-h-[40px] leading-normal ${
-                      !selectedTask.description ? 'italic text-slate-600' : ''
-                    }`}
+                    className={`text-[11px] text-slate-400 whitespace-pre-wrap p-2 rounded bg-dark-900/40 border border-slate-800/80 min-h-[40px] leading-normal ${!selectedTask.description ? 'italic text-slate-600' : ''
+                      }`}
                   >
                     {selectedTask.description || 'No description provided.'}
                   </div>
