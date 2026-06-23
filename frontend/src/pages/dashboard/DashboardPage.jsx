@@ -16,7 +16,7 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
       <Icon size={20} className="text-white" />
     </div>
     <div className="min-w-0">
-      <p className="text-xl font-bold text-white truncate">{value}</p>
+      <p className="text-xl font-bold text-slate-100 truncate">{value}</p>
       <p className="text-xs text-slate-400 font-semibold truncate uppercase tracking-wider">{label}</p>
     </div>
   </div>
@@ -28,7 +28,7 @@ const ProjectStatusProgress = ({ label, count, max, color }) => {
     <div className="space-y-1">
       <div className="flex justify-between items-center text-xs font-semibold">
         <span className="text-slate-400">{label}</span>
-        <span className="text-white font-bold">{count}</span>
+        <span className="text-slate-100 font-bold">{count}</span>
       </div>
       <div className="w-full h-1.5 bg-dark-900 rounded-full overflow-hidden border border-slate-800">
         <div
@@ -82,9 +82,9 @@ const CompletionTrendChart = ({ trend }) => {
           const y = paddingY + ratio * chartHeight
           const val = Math.round(maxVal * (1 - ratio))
           return (
-            <g key={idx} className="opacity-25">
-              <line x1={paddingX} y1={y} x2={width - paddingX} y2={y} stroke="#475569" strokeDasharray="3 3" strokeWidth="0.8" />
-              <text x={paddingX - 8} y={y + 3} fill="#94a3b8" fontSize="8" textAnchor="end" className="font-semibold">{val}</text>
+            <g key={idx} className="opacity-40">
+              <line x1={paddingX} y1={y} x2={width - paddingX} y2={y} strokeDasharray="3 3" strokeWidth="0.8" className="stroke-slate-300 dark:stroke-slate-700" />
+              <text x={paddingX - 8} y={y + 3} fontSize="8" textAnchor="end" className="font-semibold fill-slate-500 dark:fill-slate-400">{val}</text>
             </g>
           )
         })}
@@ -103,8 +103,8 @@ const CompletionTrendChart = ({ trend }) => {
               cy={p.y}
               r="3.5"
               fill="#0ea5e9"
-              stroke="#0f172a"
               strokeWidth="1.5"
+              className="stroke-white dark:stroke-dark-900"
             />
             <title>{`${trend[idx].count} tasks completed`}</title>
           </g>
@@ -118,10 +118,9 @@ const CompletionTrendChart = ({ trend }) => {
               key={idx}
               x={x}
               y={height - 2}
-              fill="#64748b"
               fontSize="8"
               textAnchor="middle"
-              className="font-bold"
+              className="font-bold fill-slate-500 dark:fill-slate-400"
             >
               {t.day}
             </text>
@@ -170,7 +169,7 @@ const DashboardPage = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
             Welcome back, {user?.name?.split(' ')[0]} 👋
           </h1>
           <p className="text-slate-400 text-xs mt-0.5">
@@ -201,7 +200,7 @@ const DashboardPage = () => {
             {/* Trend Chart (Line Graph) */}
             <div className="card p-5 lg:col-span-2 space-y-4 shadow-md">
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2 uppercase tracking-wider">
                   <AiOutlineRise className="text-primary-400" /> Task Completion Trend
                 </h3>
                 <p className="text-slate-500 text-xs mt-0.5">Tasks completed daily over the past 7 days.</p>
@@ -214,7 +213,7 @@ const DashboardPage = () => {
             {/* Status Breakdown (Bar Chart) */}
             <div className="card p-5 space-y-4 shadow-md">
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2 uppercase tracking-wider">
                   <AiOutlineProject className="text-primary-400" /> Project Statuses
                 </h3>
                 <p className="text-slate-500 text-xs mt-0.5">Breakdown of registered projects by status.</p>
@@ -232,7 +231,7 @@ const DashboardPage = () => {
             {/* Progress overview ring */}
             <div className="card p-5 lg:col-span-2 flex items-center gap-6 shadow-md">
               <div className="relative w-20 h-20 rounded-full border-4 border-dark-800 flex items-center justify-center flex-shrink-0">
-                <span className="text-lg font-black text-white">{stats.progressOverview}%</span>
+                <span className="text-lg font-black text-slate-100">{stats.progressOverview}%</span>
                 <div className="absolute inset-0 rounded-full border-4 border-primary-500 border-t-transparent animate-spin-slow opacity-20 pointer-events-none" />
               </div>
               <div className="space-y-1">
@@ -245,7 +244,7 @@ const DashboardPage = () => {
             
             {/* Quick Actions */}
             <div className="card p-5 space-y-3.5 shadow-md">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-700/50 pb-1.5">
+              <h3 className="text-xs font-bold text-slate-100 uppercase tracking-wider border-b border-slate-700/50 pb-1.5">
                 Quick Actions
               </h3>
               <div className="flex flex-col gap-2">
@@ -277,7 +276,7 @@ const DashboardPage = () => {
             {/* Trend Chart (Line Graph) */}
             <div className="card p-5 lg:col-span-2 space-y-4 shadow-md">
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2 uppercase tracking-wider">
                   <AiOutlineRise className="text-primary-400" /> Managed Tasks Trend
                 </h3>
                 <p className="text-slate-500 text-xs mt-0.5">Tasks completed daily across your managed projects.</p>
@@ -290,7 +289,7 @@ const DashboardPage = () => {
             {/* Status Breakdown (Bar Chart) */}
             <div className="card p-5 space-y-4 shadow-md">
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2 uppercase tracking-wider">
                   <AiOutlineProject className="text-primary-400" /> Project Statuses
                 </h3>
                 <p className="text-slate-500 text-xs mt-0.5">Status breakdown of your managed projects.</p>
@@ -305,7 +304,7 @@ const DashboardPage = () => {
           </div>
 
           <div className="card p-5">
-            <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2 uppercase tracking-wider">
+            <h3 className="text-sm font-bold text-slate-100 mb-2 flex items-center gap-2 uppercase tracking-wider">
               <AiOutlineDashboard className="text-primary-400" /> Manager Control Panel
             </h3>
             <p className="text-slate-400 text-xs mb-4">Verify deadlines and review logged efforts on your projects.</p>
@@ -345,7 +344,7 @@ const DashboardPage = () => {
             {/* Trend Chart (Line Graph) */}
             <div className="card p-5 lg:col-span-2 space-y-4 shadow-md">
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2 uppercase tracking-wider">
                   <AiOutlineRise className="text-primary-400" /> My Completion Trend
                 </h3>
                 <p className="text-slate-500 text-xs mt-0.5">Tasks completed daily by you over the past 7 days.</p>
@@ -358,7 +357,7 @@ const DashboardPage = () => {
             {/* Status Breakdown (Bar Chart) */}
             <div className="card p-5 space-y-4 shadow-md">
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2 uppercase tracking-wider">
                   <AiOutlineProject className="text-primary-400" /> Project Statuses
                 </h3>
                 <p className="text-slate-500 text-xs mt-0.5">Status breakdown of your active projects.</p>
@@ -375,7 +374,7 @@ const DashboardPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Recent Activity */}
             <div className="card p-5 lg:col-span-2 space-y-3 shadow-md">
-              <h3 className="text-xs font-bold text-white flex items-center gap-2 uppercase tracking-wider border-b border-slate-700/50 pb-1.5">
+              <h3 className="text-xs font-bold text-slate-100 flex items-center gap-2 uppercase tracking-wider border-b border-slate-700/50 pb-1.5">
                 <AiOutlineHistory className="text-primary-400" /> Recent Activity Logs
               </h3>
               <p className="text-slate-500 text-[11px]">Audit records of your operations in the workspace.</p>
@@ -384,7 +383,7 @@ const DashboardPage = () => {
                   stats.recentActivity.map((log) => (
                     <div key={log._id} className="py-2.5 flex justify-between gap-4 text-xs">
                       <div>
-                        <p className="font-semibold text-white capitalize">{log.action.replace(/_/g, ' ')}</p>
+                        <p className="font-semibold text-slate-100 capitalize">{log.action.replace(/_/g, ' ')}</p>
                         <p className="text-slate-500 mt-0.5">Entity: {log.entity}</p>
                       </div>
                       <span className="text-slate-400">{new Date(log.timestamp).toLocaleString()}</span>
@@ -398,7 +397,7 @@ const DashboardPage = () => {
 
             {/* Deadline Warnings */}
             <div className="card p-5 space-y-4 shadow-md">
-              <h3 className="text-xs font-bold text-white flex items-center gap-2 uppercase tracking-wider border-b border-slate-700/50 pb-1.5">
+              <h3 className="text-xs font-bold text-slate-100 flex items-center gap-2 uppercase tracking-wider border-b border-slate-700/50 pb-1.5">
                 <AiOutlineBell className="text-primary-400" /> Deadline Warnings
               </h3>
               <p className="text-slate-500 text-[11px]">You have <strong>{stats.tasksDueSoon}</strong> active tasks due within the next 48 hours.</p>

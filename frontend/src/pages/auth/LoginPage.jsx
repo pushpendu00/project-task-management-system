@@ -91,14 +91,14 @@ const LoginPage = () => {
       {/* Right Side: Form Content */}
       <div className="w-full md:w-1/2 lg:w-2/5 h-screen overflow-y-auto bg-dark-950 flex flex-col justify-between p-6 sm:p-12 relative">
         <div className="flex items-center justify-center md:hidden mb-6 mt-4">
-          <span className="text-2xl font-bold tracking-wider text-white">
+          <span className="text-2xl font-bold tracking-wider text-slate-100">
             <span className="text-primary-400">Task</span>Flow
           </span>
         </div>
 
         <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full py-8 animate-slide-in">
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-white">Sign In</h1>
+            <h1 className="text-2xl font-bold text-slate-100">Sign In</h1>
             <p className="text-slate-400 mt-2 text-sm">Welcome back! Sign in to your workspace</p>
           </div>
           
@@ -144,13 +144,13 @@ const LoginPage = () => {
           </div>
           
           <div className="flex justify-center gap-3 text-slate-500">
-            <a href="#github" className="hover:text-white transition-colors" title="GitHub">
+            <a href="#github" className="hover:text-slate-100 transition-colors" title="GitHub">
               <AiOutlineGithub size={18} />
             </a>
-            <a href="#linkedin" className="hover:text-white transition-colors" title="LinkedIn">
+            <a href="#linkedin" className="hover:text-slate-100 transition-colors" title="LinkedIn">
               <AiOutlineLinkedin size={18} />
             </a>
-            <a href="#twitter" className="hover:text-white transition-colors" title="Twitter / X">
+            <a href="#twitter" className="hover:text-slate-100 transition-colors" title="Twitter / X">
               <AiOutlineTwitter size={18} />
             </a>
           </div>

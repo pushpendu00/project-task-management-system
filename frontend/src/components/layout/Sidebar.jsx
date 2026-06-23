@@ -74,13 +74,13 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Logo */}
         <div className="flex items-center justify-between p-4 border-b border-slate-700/50 flex-shrink-0">
           {!collapsed && (
-            <span className="text-lg font-bold text-white truncate">
+            <span className="text-lg font-bold text-slate-100 truncate">
               <span className="text-primary-400">Task</span>Flow
             </span>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-700 transition-colors ml-auto hidden md:block"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors ml-auto hidden md:block"
             id="sidebar-toggle-btn"
           >
             {collapsed ? <AiOutlineMenu size={18} /> : <AiOutlineClose size={18} />}
@@ -88,7 +88,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           {/* Mobile close button */}
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-700 transition-colors ml-auto md:hidden"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors ml-auto md:hidden"
             id="sidebar-mobile-close-btn"
           >
             <AiOutlineClose size={18} />

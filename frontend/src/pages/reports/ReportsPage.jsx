@@ -196,7 +196,7 @@ const ReportsPage = () => {
                   </div>
                   <div className="card p-5 bg-dark-850">
                     <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Total Tasks</p>
-                    <p className="text-3xl font-black text-white mt-2">{projectReport.totalTasks}</p>
+                    <p className="text-3xl font-black text-slate-100 mt-2">{projectReport.totalTasks}</p>
                   </div>
                   <div className="card p-5 bg-dark-850">
                     <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Completed Tasks</p>
@@ -212,7 +212,7 @@ const ReportsPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Status counts card */}
                   <div className="card p-6">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 border-b border-slate-700/50 pb-2">
+                    <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider mb-4 border-b border-slate-700/50 pb-2">
                       Tasks Status Distribution
                     </h3>
                     <div className="space-y-3">
@@ -240,7 +240,7 @@ const ReportsPage = () => {
 
                   {/* Priority counts card */}
                   <div className="card p-6">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 border-b border-slate-700/50 pb-2">
+                    <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider mb-4 border-b border-slate-700/50 pb-2">
                       Tasks Priority Distribution
                     </h3>
                     <div className="space-y-3">
@@ -306,11 +306,11 @@ const ReportsPage = () => {
                                )}
                              </div>
                             <div>
-                              <p className="font-semibold text-white">{emp.name}</p>
+                              <p className="font-semibold text-slate-100">{emp.name}</p>
                               <p className="text-[10px] text-slate-500">{emp.email}</p>
                             </div>
                           </td>
-                          <td className="py-4 px-6 text-center font-semibold text-white">{emp.assignedTasks}</td>
+                          <td className="py-4 px-6 text-center font-semibold text-slate-100">{emp.assignedTasks}</td>
                           <td className="py-4 px-6 text-center text-green-400 font-semibold">{emp.completedTasks}</td>
                           <td className="py-4 px-6 text-center text-primary-400 font-semibold">{emp.totalHoursLogged} hrs</td>
                           <td className="py-4 px-6 text-center text-slate-300 font-semibold">
@@ -358,7 +358,7 @@ const ReportsPage = () => {
                           <td className="py-3 px-6 text-slate-400 whitespace-nowrap">
                             {new Date(log.timestamp).toLocaleString()}
                           </td>
-                          <td className="py-3 px-6 font-medium text-white">
+                          <td className="py-3 px-6 font-medium text-slate-100">
                             {log.user?.name || 'System / Unregistered'}
                           </td>
                           <td className="py-3 px-6 capitalize">

@@ -159,7 +159,7 @@ const ProjectDetailPage = () => {
                 <span className="truncate max-w-[120px] text-slate-400 font-medium">{project.name}</span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-lg font-bold text-white tracking-tight truncate">
+                <h1 className="text-lg font-bold text-slate-100 tracking-tight truncate">
                   {project.name}
                 </h1>
                 <Badge type="status" value={project.status} className="text-[10px] px-2 py-0.5" />
@@ -178,14 +178,14 @@ const ProjectDetailPage = () => {
             <div className="flex bg-dark-900 border border-slate-700/50 rounded-lg p-0.5">
               <button
                 onClick={() => setViewMode('board')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${viewMode === 'board' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${viewMode === 'board' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-slate-100'}`}
                 type="button"
               >
                 <AiOutlineAppstore size={14} /> Board
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${viewMode === 'list' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${viewMode === 'list' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-slate-100'}`}
                 type="button"
               >
                 <AiOutlineUnorderedList size={14} /> List
@@ -263,7 +263,7 @@ const ProjectDetailPage = () => {
                         onClick={() => handleTaskClick(task)}
                         className="hover:bg-dark-800/20 cursor-pointer transition-colors"
                       >
-                        <td className="py-3.5 px-5 font-semibold text-white">
+                        <td className="py-3.5 px-5 font-semibold text-slate-100">
                           {task.title}
                         </td>
                         <td className="py-3.5 px-5">
@@ -308,7 +308,7 @@ const ProjectDetailPage = () => {
         <div className="lg:col-span-1 space-y-4">
           {/* Project Details Panel */}
           <div className="card p-3.5 space-y-3.5 shadow-md">
-            <h3 className="text-xs font-bold text-white border-b border-slate-700/50 pb-1.5 uppercase tracking-wider">
+            <h3 className="text-xs font-bold text-slate-100 border-b border-slate-700/50 pb-1.5 uppercase tracking-wider">
               Project Settings
             </h3>
             <div className="space-y-3">
@@ -390,7 +390,7 @@ const ProjectDetailPage = () => {
           {/* Project Team Members Panel */}
           <div className="card p-3.5 space-y-3.5 shadow-md">
             <div className="flex items-center justify-between border-b border-slate-700/50 pb-1.5">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+              <h3 className="text-xs font-bold text-slate-100 uppercase tracking-wider">
                 Team Members ({project.members?.length || 0})
               </h3>
             </div>
@@ -418,7 +418,7 @@ const ProjectDetailPage = () => {
                     {canManageMembers && (
                       <button
                         onClick={() => handleRemoveMemberClick(member.user?._id)}
-                        className="text-slate-500 hover:text-red-400 p-0.5 transition-colors flex-shrink-0"
+                        className="text-slate-500 hover:text-red-600 dark:hover:text-red-400 p-0.5 transition-colors flex-shrink-0"
                         title="Remove member"
                       >
                         <AiOutlineCloseCircle size={14} />
@@ -478,10 +478,10 @@ const ProjectDetailPage = () => {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="font-semibold text-white block truncate">{selectedUser.name}</span>
+                  <span className="font-semibold text-slate-100 block truncate">{selectedUser.name}</span>
                   <span className="text-slate-500 block text-[10px] truncate">{selectedUser.email}</span>
                 </div>
-                <button type="button" onClick={() => { setSelectedUser(null); setSearchQuery('') }} className="text-slate-400 hover:text-red-400 font-bold px-1.5 transition-colors">✕</button>
+                <button type="button" onClick={() => { setSelectedUser(null); setSearchQuery('') }} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 font-bold px-1.5 transition-colors">✕</button>
               </div>
             )}
 
@@ -514,7 +514,7 @@ const ProjectDetailPage = () => {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="font-semibold text-white block truncate">{u.name}</span>
+                        <span className="font-semibold text-slate-100 block truncate">{u.name}</span>
                         <span className="text-slate-500 text-[10px] block truncate">{u.email}</span>
                       </div>
                     </div>
@@ -589,7 +589,7 @@ const ProjectDetailPage = () => {
                     <button
                       type="button"
                       onClick={() => handleRemoveMemberClick(member.user?._id || member.user)}
-                      className="text-slate-500 hover:text-red-400 p-1 transition-colors"
+                      className="text-slate-500 hover:text-red-600 dark:hover:text-red-400 p-1 transition-colors"
                       title="Remove member"
                     >
                       <AiOutlineCloseCircle size={16} />

@@ -92,7 +92,7 @@ const TasksPage = () => {
           <div className="flex bg-dark-800 border border-slate-700/50 rounded-lg p-0.5">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'}`}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-slate-100'}`}
               title="Grid View"
               type="button"
             >
@@ -100,7 +100,7 @@ const TasksPage = () => {
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'}`}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-slate-100'}`}
               title="List View"
               type="button"
             >
@@ -245,7 +245,7 @@ const TasksPage = () => {
                   onClick={() => navigate(`/tasks/${task._id}`)}
                   className="hover:bg-dark-700/20 cursor-pointer transition-colors"
                 >
-                  <td className="py-3 px-4 font-semibold text-white">
+                  <td className="py-3 px-4 font-semibold text-slate-100">
                     {task.title}
                   </td>
                   <td className="py-3 px-4 text-slate-450">

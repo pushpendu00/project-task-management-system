@@ -3,25 +3,25 @@ import { Link } from 'react-router-dom'
 import { AiOutlineCalendar, AiOutlineTeam, AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai'
 import Badge from '../common/Badge'
 import { formatDate } from '../../utils/formatDate'
- 
+
 const ProjectCard = ({ project, onEdit, onDelete }) => (
   <div className="card p-5 hover:border-slate-600 transition-all duration-200 hover:shadow-xl
                   hover:shadow-primary-900/10 group animate-fade-in">
     <div className="flex items-start justify-between mb-3">
       <div className="flex-1 min-w-0">
         <Link to={`/projects/${project._id}`}
-              className="text-base font-semibold text-white hover:text-primary-400 transition-colors line-clamp-1">
+          className="text-base font-semibold text-slate-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors line-clamp-1">
           {project.name}
         </Link>
         <p className="text-sm text-slate-500 mt-0.5 line-clamp-2">{project.description}</p>
       </div>
       <div className="flex gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        {onEdit   && <button onClick={() => onEdit(project)}      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-700 transition-colors" title="Edit Project"><AiOutlineEdit size={16} /></button>}
-        {onDelete && <button onClick={() => onDelete(project._id)} className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-dark-700 transition-colors" title="Delete Project"><AiOutlineDelete size={16} /></button>}
+        {onEdit && <button onClick={() => onEdit(project)} className="p-1.5 rounded-lg text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-slate-800 transition-colors" title="Edit Project"><AiOutlineEdit size={16} /></button>}
+        {onDelete && <button onClick={() => onDelete(project._id)} className="p-1.5 rounded-lg text-red-600 dark:text-red-400 hover:text-white hover:bg-red-600 transition-colors" title="Delete Project"><AiOutlineDelete size={16} /></button>}
       </div>
     </div>
     <div className="flex gap-2 mb-4">
-      <Badge type="status"   value={project.status}   />
+      <Badge type="status" value={project.status} />
       <Badge type="priority" value={project.priority} />
     </div>
     {/* Progress Bar */}

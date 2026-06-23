@@ -438,7 +438,7 @@ const ProfilePage = () => {
                               }}
                               className={`w-full text-left px-2.5 py-1.5 rounded text-xs transition-colors flex items-center justify-between ${phoneCountry === c.code
                                   ? 'bg-primary-600/20 text-primary-400 font-medium'
-                                  : 'text-slate-350 hover:bg-slate-700/40 hover:text-white'
+                                  : 'text-slate-350 hover:bg-slate-800 hover:text-slate-100'
                                 }`}
                             >
                               <span className="truncate mr-2">{c.name}</span>
@@ -559,7 +559,7 @@ const ProfilePage = () => {
                 )}
               </div>
               <div className="space-y-1">
-                <h2 className="text-lg font-bold text-white">{user.name}</h2>
+                <h2 className="text-lg font-bold text-slate-100">{user.name}</h2>
                 <p className="text-xs text-primary-400 font-medium capitalize">
                   {user.role === 'member' ? 'Employee' : user.role === 'manager' ? 'Project Manager' : 'Admin'}
                 </p>
@@ -667,7 +667,7 @@ const ProfilePage = () => {
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-dark-850 border border-slate-700/60 rounded-xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col items-center p-5 space-y-4 text-center">
             <div>
-              <h3 className="text-sm font-bold text-white">Adjust Profile Photo</h3>
+              <h3 className="text-sm font-bold text-slate-100">Adjust Profile Photo</h3>
               <p className="text-[11px] text-slate-400 mt-0.5">Drag to position, use the slider to zoom.</p>
             </div>
 

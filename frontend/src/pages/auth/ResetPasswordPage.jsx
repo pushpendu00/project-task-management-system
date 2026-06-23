@@ -40,7 +40,7 @@ const ResetPasswordPage = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-primary-900/20 via-dark-900 to-dark-950 pointer-events-none" />
       <div className="relative w-full max-w-md animate-slide-in">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white">
+          <h1 className="text-3xl font-bold text-slate-100">
             <span className="text-primary-400">Task</span>Flow
           </h1>
           <p className="text-slate-400 mt-2 text-sm">Create a new password</p>

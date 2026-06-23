@@ -66,7 +66,7 @@ const NotificationsPage = () => {
                 <AiOutlineBell size={18} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm ${!n.isRead ? 'text-white font-semibold' : 'text-slate-300'}`}>
+                <p className={`text-sm ${!n.isRead ? 'text-slate-100 font-semibold' : 'text-slate-300'}`}>
                   {n.message}
                 </p>
                 <div className="flex items-center gap-2 mt-1.5 text-[10px] text-slate-500 uppercase tracking-wider font-bold">
@@ -88,7 +88,7 @@ const NotificationsPage = () => {
                     e.stopPropagation()
                     markAsRead(n._id)
                   }}
-                  className="p-1 rounded hover:bg-dark-700/50 text-slate-400 hover:text-white transition-colors"
+                  className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-100 transition-colors"
                   title="Mark as read"
                 >
                   <AiOutlineEye size={16} />

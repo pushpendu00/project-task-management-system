@@ -39,58 +39,58 @@ const getHistoryMessage = (log) => {
     case 'STATUS_CHANGE':
       return (
         <span>
-          <strong className="text-slate-300">{userName}</strong> updated status from{' '}
-          <span className="text-red-400 bg-red-950/20 px-1.5 py-0.5 rounded text-[10px] font-mono">{prevVal}</span> to{' '}
-          <span className="text-green-400 bg-green-950/20 px-1.5 py-0.5 rounded text-[10px] font-mono">{newVal}</span>
+          <strong className="text-slate-100">{userName}</strong> updated status from{' '}
+          <span className="text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 border border-red-200/50 dark:border-red-900/30 px-1.5 py-0.5 rounded text-[11px] font-mono capitalize">{prevVal.replace(/-/g, ' ')}</span> to{' '}
+          <span className="text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-950/40 border border-green-200/50 dark:border-green-900/30 px-1.5 py-0.5 rounded text-[11px] font-mono capitalize">{newVal.replace(/-/g, ' ')}</span>
         </span>
       )
     case 'ASSIGNEE_CHANGE':
       return (
         <span>
-          <strong className="text-slate-300">{userName}</strong> reassigned task from{' '}
+          <strong className="text-slate-100">{userName}</strong> reassigned task from{' '}
           <strong className="text-slate-400">{prevVal}</strong> to{' '}
-          <strong className="text-primary-400">{newVal}</strong>
+          <strong className="text-primary-600 dark:text-primary-400">{newVal}</strong>
         </span>
       )
     case 'DUE_DATE_CHANGE':
       return (
         <span>
-          <strong className="text-slate-300">{userName}</strong> changed due date from{' '}
+          <strong className="text-slate-100">{userName}</strong> changed due date from{' '}
           <span className="text-slate-400 line-through">{prevVal}</span> to{' '}
-          <span className="text-primary-400 font-bold">{newVal}</span>
+          <span className="text-primary-600 dark:text-primary-400 font-bold">{newVal}</span>
         </span>
       )
     case 'TITLE_CHANGE':
       return (
         <span>
-          <strong className="text-slate-300">{userName}</strong> updated title from <span className="text-slate-400 line-through">"{prevVal}"</span> to <strong className="text-slate-100">"{newVal}"</strong>
+          <strong className="text-slate-100">{userName}</strong> updated title from <span className="text-slate-400 line-through">"{prevVal}"</span> to <strong className="text-slate-100">"{newVal}"</strong>
         </span>
       )
     case 'DESCRIPTION_CHANGE':
       return (
         <span>
-          <strong className="text-slate-300">{userName}</strong> updated description
+          <strong className="text-slate-100">{userName}</strong> updated description
         </span>
       )
     case 'PRIORITY_CHANGE':
       return (
         <span>
-          <strong className="text-slate-300">{userName}</strong> updated priority from{' '}
-          <span className="text-red-400 bg-red-950/20 px-1.5 py-0.5 rounded text-[10px] font-mono capitalize">{prevVal}</span> to{' '}
-          <span className="text-green-400 bg-green-950/20 px-1.5 py-0.5 rounded text-[10px] font-mono capitalize">{newVal}</span>
+          <strong className="text-slate-100">{userName}</strong> updated priority from{' '}
+          <span className="text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 border border-red-200/50 dark:border-red-900/30 px-1.5 py-0.5 rounded text-[11px] font-mono capitalize">{prevVal}</span> to{' '}
+          <span className="text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-950/40 border border-green-200/50 dark:border-green-900/30 px-1.5 py-0.5 rounded text-[11px] font-mono capitalize">{newVal}</span>
         </span>
       )
     case 'ESTIMATED_HOURS_CHANGE':
       return (
         <span>
-          <strong className="text-slate-300">{userName}</strong> updated estimated effort from <span className="text-slate-400 font-mono">{prevVal}h</span> to <strong className="text-slate-100 font-mono">{newVal}h</strong>
+          <strong className="text-slate-100">{userName}</strong> updated estimated effort from <span className="text-slate-400 font-mono">{prevVal}h</span> to <strong className="text-slate-100 font-mono">{newVal}h</strong>
         </span>
       )
     default:
       return (
         <span>
-          <strong className="text-slate-300">{userName}</strong> performed action{' '}
-          <span className="text-primary-400 capitalize">{action.replace(/_/g, ' ').toLowerCase()}</span>
+          <strong className="text-slate-100">{userName}</strong> performed action{' '}
+          <span className="text-primary-600 dark:text-primary-400 capitalize">{action.replace(/_/g, ' ').toLowerCase()}</span>
         </span>
       )
   }
@@ -442,11 +442,11 @@ const TaskDetailPage = () => {
                 onBlur={handleTitleSubmit}
                 onKeyDown={(e) => e.key === 'Enter' && handleTitleSubmit()}
                 autoFocus
-                className="input text-xs font-semibold py-0 px-1 border-primary-500 bg-dark-900 text-white w-auto"
+                className="input text-xs font-semibold py-0 px-1 border-primary-500 bg-dark-900 text-slate-100 w-auto"
               />
             ) : (
               <h2
-                className={`text-xs font-semibold text-white flex items-center gap-1 group truncate ${
+                className={`text-xs font-semibold text-slate-100 flex items-center gap-1 group truncate ${
                   isAdmin || isPM ? 'cursor-pointer hover:text-primary-400' : ''
                 }`}
                 onClick={() => {
@@ -525,7 +525,7 @@ const TaskDetailPage = () => {
                               id={`comment-row-${item._id}`} 
                               className="w-full transition-all duration-500 rounded p-1"
                             >
-                              <div className={`flex items-center gap-2 group max-w-[85%] ${isCurrentUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}>
+                              <div className={`flex items-start gap-2 group max-w-[85%] ${isCurrentUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}>
                                 <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-[9px] flex-shrink-0 overflow-hidden">
                                   {item.user?.avatar ? (
                                     <img
@@ -541,7 +541,7 @@ const TaskDetailPage = () => {
                                   id={`comment-${item._id}`}
                                   className={`p-2 rounded-lg border transition-all duration-350 ${
                                     isCurrentUser 
-                                      ? 'bg-primary-900 border-primary-700/50 text-slate-100 rounded-tr-none' 
+                                      ? 'bg-primary-600 dark:bg-primary-900 border-primary-500/30 dark:border-primary-700/50 text-white rounded-tr-none' 
                                       : 'bg-dark-800/80 border-slate-700/30 text-slate-300 rounded-tl-none'
                                   }`}
                                 >
@@ -557,17 +557,21 @@ const TaskDetailPage = () => {
                                           }, 3000);
                                         }
                                       }}
-                                      className="mb-1.5 p-1.5 rounded bg-dark-950/40 border-l-2 border-primary-500 text-[10px] text-slate-400 hover:bg-dark-950/60 cursor-pointer transition-colors max-w-full"
+                                      className={`mb-1.5 p-1.5 rounded border-l-2 cursor-pointer transition-colors max-w-full text-[10px] ${
+                                        isCurrentUser
+                                          ? 'bg-black/30 border-white/40 text-white/80 hover:bg-black/45'
+                                          : 'bg-dark-950/40 border-primary-500 text-slate-400 hover:bg-dark-950/60'
+                                      }`}
                                     >
-                                      <div className="font-bold text-[8px] text-primary-400">@{item.replyToUser}</div>
-                                      <div className="truncate text-slate-450 max-w-[180px] text-[9px] mt-0.5">
+                                      <div className={`font-bold text-[8px] ${isCurrentUser ? 'text-primary-300' : 'text-primary-400'}`}>@{item.replyToUser}</div>
+                                      <div className={`truncate max-w-[180px] text-[9px] mt-0.5 ${isCurrentUser ? 'text-white/60' : 'text-slate-450'}`}>
                                         {item.replyToText}
                                       </div>
                                     </div>
                                   )}
                                   <div className="flex items-center justify-between gap-3 mb-0.5">
-                                    <span className="font-bold text-[10px] text-slate-300">{item.user?.name}</span>
-                                    <span className="text-[8px] text-slate-500">{formatRelativeTime(item.createdAt)}</span>
+                                    <span className={`font-bold text-[10px] ${isCurrentUser ? 'text-white/90' : 'text-slate-300'}`}>{item.user?.name}</span>
+                                    <span className={`text-[8px] ${isCurrentUser ? 'text-white/60' : 'text-slate-500'}`}>{formatRelativeTime(item.createdAt)}</span>
                                   </div>
                                   {item.text && <p className="text-[11px] whitespace-pre-wrap leading-relaxed">{item.text}</p>}
                                   {item.attachmentUrl && (
@@ -577,7 +581,9 @@ const TaskDetailPage = () => {
                                           href={getAttachmentUrl(item.attachmentUrl)}
                                           target="_blank"
                                           rel="noopener noreferrer"
-                                          className="block max-w-[200px] overflow-hidden rounded border border-slate-700/50 hover:opacity-90 transition-opacity"
+                                          className={`block max-w-[200px] overflow-hidden rounded border hover:opacity-90 transition-opacity ${
+                                            isCurrentUser ? 'border-white/20' : 'border-slate-700/50'
+                                          }`}
                                         >
                                           <img
                                             src={getAttachmentUrl(item.attachmentUrl)}
@@ -590,7 +596,11 @@ const TaskDetailPage = () => {
                                           href={getAttachmentUrl(item.attachmentUrl)}
                                           target="_blank"
                                           rel="noopener noreferrer"
-                                          className="inline-flex items-center gap-1.5 bg-dark-900/60 hover:bg-dark-950 p-1 px-2 rounded border border-slate-800/80 text-[10px] text-primary-400 hover:text-primary-350 transition-colors font-medium max-w-full"
+                                          className={`inline-flex items-center gap-1.5 p-1 px-2 rounded border text-[10px] transition-colors font-medium max-w-full ${
+                                            isCurrentUser
+                                              ? 'bg-black/30 border-white/10 text-primary-300 hover:bg-black/45 hover:text-primary-200'
+                                              : 'bg-dark-900/60 hover:bg-dark-950 border-slate-800/80 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-350'
+                                          }`}
                                         >
                                           <AiOutlinePaperClip size={11} className="flex-shrink-0" />
                                           <span className="truncate max-w-[120px]">{item.attachmentName || 'Attachment'}</span>
@@ -610,7 +620,7 @@ const TaskDetailPage = () => {
                                     attachmentUrl: item.attachmentUrl,
                                     attachmentName: item.attachmentName
                                   })}
-                                  className="p-1 rounded bg-slate-800/40 hover:bg-slate-700 border border-slate-700/40 text-slate-400 hover:text-white transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center flex-shrink-0"
+                                  className="p-1 rounded bg-slate-800/40 hover:bg-slate-700 border border-slate-700/40 text-slate-400 hover:text-slate-100 transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center flex-shrink-0"
                                   title="Reply"
                                 >
                                   <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="w-2.5 h-2.5" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
@@ -622,7 +632,7 @@ const TaskDetailPage = () => {
                           )
                         } else {
                           return (
-                            <div key={item._id || `${item.timestamp}-${item.action}`} className="flex items-center justify-center py-0.5 text-[9px] text-slate-500 mx-auto max-w-[90%] text-center">
+                            <div key={item._id || `${item.timestamp}-${item.action}`} className="flex items-center justify-center py-0.5 text-[11px] text-slate-200 mx-auto max-w-[90%] text-center">
                               <span className="bg-dark-900 border border-slate-800/60 rounded-full px-2.5 py-0.5 leading-snug">
                                 {getHistoryMessage(item)}
                               </span>
@@ -665,7 +675,7 @@ const TaskDetailPage = () => {
                       <button
                         type="button"
                         onClick={() => setReplyingTo(null)}
-                        className="text-slate-500 hover:text-white transition-colors ml-2 self-center"
+                        className="text-slate-500 hover:text-slate-100 transition-colors ml-2 self-center"
                       >
                         <AiOutlineClose size={12} />
                       </button>
@@ -680,7 +690,7 @@ const TaskDetailPage = () => {
                       <button
                         type="button"
                         onClick={() => setSelectedFile(null)}
-                        className="text-slate-500 hover:text-white transition-colors"
+                        className="text-slate-500 hover:text-slate-100 transition-colors"
                       >
                         <AiOutlineClose size={12} />
                       </button>
@@ -698,7 +708,7 @@ const TaskDetailPage = () => {
                       type="button"
                       disabled={uploadingFile}
                       onClick={() => fileInputRef.current?.click()}
-                      className="bg-dark-800 hover:bg-dark-750 text-slate-400 hover:text-white border border-slate-700/50 p-1.5 rounded transition-colors mb-1 flex-shrink-0"
+                      className="bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-100 border border-slate-700/50 p-1.5 rounded transition-colors mb-1 flex-shrink-0"
                       title="Attach file, image, or document"
                     >
                       <AiOutlinePaperClip size={12} />
@@ -763,7 +773,7 @@ const TaskDetailPage = () => {
                 {/* Log Hours Form (Only for Assignee or Admin/PM acting) */}
                 {(isAssignee || isAdmin || isPM) && (
                   <form onSubmit={handleLogWorkSubmit} className="bg-dark-800/30 p-3 rounded-lg border border-slate-700/30 space-y-3">
-                    <h4 className="text-[9px] font-bold text-white uppercase tracking-wider flex items-center gap-1">
+                    <h4 className="text-[9px] font-bold text-slate-100 uppercase tracking-wider flex items-center gap-1">
                       <AiOutlinePlus size={10} /> Submit Effort Log
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -876,7 +886,7 @@ const TaskDetailPage = () => {
                             />
                             <button
                               type="submit"
-                              className="bg-dark-800 text-slate-300 border border-slate-700 hover:text-white hover:bg-dark-700 p-1.5 rounded transition-colors flex-shrink-0"
+                              className="bg-slate-800 text-slate-300 border border-slate-700 hover:text-slate-100 hover:bg-slate-700 p-1.5 rounded transition-colors flex-shrink-0"
                               title="Send reply"
                             >
                               <AiOutlineComment size={12} />
@@ -1035,7 +1045,7 @@ const TaskDetailPage = () => {
                     type="date"
                     value={selectedTask.dueDate ? selectedTask.dueDate.slice(0, 10) : ''}
                     onChange={(e) => handleUpdate('dueDate', e.target.value || null)}
-                    className="input text-xs py-1 bg-dark-800 text-white"
+                    className="input text-xs py-1 bg-dark-800 text-slate-100"
                   />
                 ) : (
                   <p className="text-xs text-slate-300 font-semibold pl-0.5">
@@ -1056,7 +1066,7 @@ const TaskDetailPage = () => {
                     value={localHours}
                     onChange={(e) => setLocalHours(e.target.value)}
                     placeholder="e.g. 5"
-                    className="input text-xs py-1 bg-dark-800 text-white"
+                    className="input text-xs py-1 bg-dark-800 text-slate-100"
                   />
                 ) : (
                   <p className="text-xs text-slate-300 font-semibold pl-0.5">

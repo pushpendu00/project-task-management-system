@@ -140,14 +140,14 @@ const RegisterPage = () => {
       {/* Right Side: Form Content */}
       <div className="w-full md:w-1/2 lg:w-2/5 h-screen overflow-y-auto bg-dark-950 flex flex-col justify-between p-6 sm:p-12 relative">
         <div className="flex items-center justify-center md:hidden mb-6 mt-4">
-          <span className="text-2xl font-bold tracking-wider text-white">
+          <span className="text-2xl font-bold tracking-wider text-slate-100">
             <span className="text-primary-400">Task</span>Flow
           </span>
         </div>
 
         <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full py-8 animate-slide-in">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-white">Create Account</h1>
+            <h1 className="text-2xl font-bold text-slate-100">Create Account</h1>
             <p className="text-slate-400 mt-2 text-sm">Join your workspace and start collaborating</p>
           </div>
           
@@ -209,8 +209,8 @@ const RegisterPage = () => {
                         onClick={() => handleRoleSelect(value)}
                         className={`w-full text-left text-xs px-3 py-2 rounded-md transition-colors cursor-pointer flex items-start gap-3 border ${
                           isSelected
-                            ? 'bg-primary-600/10 border-primary-500/30 text-white'
-                            : 'text-slate-350 hover:text-white hover:bg-dark-700/50 border-transparent'
+                            ? 'bg-primary-600/10 border-primary-500/30 text-primary-600 dark:text-white font-semibold'
+                            : 'text-slate-350 hover:text-slate-100 hover:bg-slate-800 border-transparent'
                         }`}
                       >
                         <div className={`mt-0.5 p-1 rounded ${isSelected ? 'bg-primary-600 text-white' : 'bg-dark-750 text-slate-400'}`}>
@@ -252,13 +252,13 @@ const RegisterPage = () => {
           </div>
           
           <div className="flex justify-center gap-3 text-slate-500">
-            <a href="#github" className="hover:text-white transition-colors" title="GitHub">
+            <a href="#github" className="hover:text-slate-100 transition-colors" title="GitHub">
               <AiOutlineGithub size={18} />
             </a>
-            <a href="#linkedin" className="hover:text-white transition-colors" title="LinkedIn">
+            <a href="#linkedin" className="hover:text-slate-100 transition-colors" title="LinkedIn">
               <AiOutlineLinkedin size={18} />
             </a>
-            <a href="#twitter" className="hover:text-white transition-colors" title="Twitter / X">
+            <a href="#twitter" className="hover:text-slate-100 transition-colors" title="Twitter / X">
               <AiOutlineTwitter size={18} />
             </a>
           </div>

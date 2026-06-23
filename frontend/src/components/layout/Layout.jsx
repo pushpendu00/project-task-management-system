@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react'
 import { NavLink, Link, useNavigate } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast'
 import { useRecoilValue, useRecoilState } from 'recoil'
-import { AiOutlineMenu, AiOutlineLogout, AiOutlineBell } from 'react-icons/ai'
+import { AiOutlineMenu, AiOutlineLogout, AiOutlineBell, AiOutlineSun, AiOutlineMoon, AiOutlineDesktop, AiOutlineCheck } from 'react-icons/ai'
 import Sidebar from './Sidebar'
+import { useTheme } from '../../context/ThemeContext'
 import useAuth from '../../hooks/useAuth'
 import { authTokenAtom } from '../../recoil/atoms/authAtom'
 import { notificationsAtom } from '../../recoil/atoms/notificationAtom'
@@ -20,6 +21,7 @@ const getAvatarUrl = (path) => {
 }
 
 const Layout = ({ children }) => {
+  const { theme, setTheme, activeTheme } = useTheme()
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const { user, logout } = useAuth()
   const token = useRecoilValue(authTokenAtom)
@@ -29,8 +31,10 @@ const Layout = ({ children }) => {
 
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [themeMenuOpen, setThemeMenuOpen] = useState(false)
   const notificationsRef = useRef(null)
   const profileRef = useRef(null)
+  const themeMenuRef = useRef(null)
 
   const unreadCount = notifications.filter(n => !n.isRead).length
 
@@ -49,6 +53,9 @@ const Layout = ({ children }) => {
       }
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setProfileOpen(false)
+      }
+      if (themeMenuRef.current && !themeMenuRef.current.contains(event.target)) {
+        setThemeMenuOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -78,18 +85,89 @@ const Layout = ({ children }) => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileSidebarOpen(true)}
-              className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-700 transition-colors"
+              className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
               title="Open menu"
             >
               <AiOutlineMenu size={20} />
             </button>
-            <span className="text-lg font-bold text-white tracking-wider md:hidden">
+            <span className="text-lg font-bold text-slate-100 tracking-wider md:hidden">
               <span className="text-primary-400">Task</span>Flow
             </span>
           </div>
 
           {/* Right section: Profile & Quick actions */}
           <div className="flex items-center gap-4">
+            {/* Theme Dropdown Selection Switcher */}
+            <div className="relative" ref={themeMenuRef}>
+              <button
+                onClick={() => {
+                  setThemeMenuOpen(!themeMenuOpen)
+                  setNotificationsOpen(false)
+                  setProfileOpen(false)
+                }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors flex-shrink-0 focus:outline-none cursor-pointer flex items-center justify-center"
+                title="Select Theme"
+                id="theme-select-btn"
+              >
+                {theme === 'light' ? <AiOutlineSun size={20} /> : theme === 'dark' ? <AiOutlineMoon size={20} /> : <AiOutlineDesktop size={20} />}
+              </button>
+
+              {themeMenuOpen && (
+                <div className="absolute right-0 mt-2 w-36 bg-dark-850 border border-slate-700/60 rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in p-1 text-left space-y-0.5">
+                  <button
+                    onClick={() => {
+                      setTheme('light')
+                      setThemeMenuOpen(false)
+                    }}
+                    className={`w-full text-left text-xs px-2.5 py-1.5 rounded transition-colors cursor-pointer flex items-center justify-between font-medium ${
+                      theme === 'light'
+                        ? 'bg-primary-600/20 text-primary-600 dark:text-primary-400 font-bold'
+                        : 'text-slate-350 hover:text-slate-100 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <AiOutlineSun size={14} /> Light
+                    </span>
+                    {theme === 'light' && <AiOutlineCheck size={12} />}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setTheme('dark')
+                      setThemeMenuOpen(false)
+                    }}
+                    className={`w-full text-left text-xs px-2.5 py-1.5 rounded transition-colors cursor-pointer flex items-center justify-between font-medium ${
+                      theme === 'dark'
+                        ? 'bg-primary-600/20 text-primary-600 dark:text-primary-400 font-bold'
+                        : 'text-slate-350 hover:text-slate-100 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <AiOutlineMoon size={14} /> Dark
+                    </span>
+                    {theme === 'dark' && <AiOutlineCheck size={12} />}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setTheme('system')
+                      setThemeMenuOpen(false)
+                    }}
+                    className={`w-full text-left text-xs px-2.5 py-1.5 rounded transition-colors cursor-pointer flex items-center justify-between font-medium ${
+                      theme === 'system'
+                        ? 'bg-primary-600/20 text-primary-600 dark:text-primary-400 font-bold'
+                        : 'text-slate-350 hover:text-slate-100 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <AiOutlineDesktop size={14} /> System
+                    </span>
+                    {theme === 'system' && <AiOutlineCheck size={12} />}
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Notification Icon and Popup Dropdown */}
             <div className="relative" ref={notificationsRef}>
               <button
@@ -97,7 +175,7 @@ const Layout = ({ children }) => {
                   setNotificationsOpen(!notificationsOpen)
                   setProfileOpen(false)
                 }}
-                className="relative p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-700 transition-colors flex-shrink-0 focus:outline-none cursor-pointer"
+                className="relative p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors flex-shrink-0 focus:outline-none cursor-pointer"
                 title="Notifications"
                 id="navbar-notifications-btn"
               >
@@ -112,7 +190,7 @@ const Layout = ({ children }) => {
               {notificationsOpen && (
                 <div className="absolute right-0 mt-2 w-80 bg-dark-850 border border-slate-700/60 rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in text-left">
                   <div className="p-3 border-b border-slate-700/50 flex justify-between items-center bg-dark-900/30">
-                    <span className="text-xs font-bold text-white">Latest Notifications</span>
+                    <span className="text-xs font-bold text-slate-100">Latest Notifications</span>
                     {unreadCount > 0 && (
                       <span className="text-[10px] bg-primary-900/40 text-primary-400 border border-primary-800/40 px-1.5 py-0.5 rounded-full font-bold">
                         {unreadCount} unread
@@ -139,7 +217,7 @@ const Layout = ({ children }) => {
                           }`} />
                           <div className="flex-1 min-w-0">
                             <p className={`text-[11px] leading-snug break-words ${
-                              !n.isRead ? 'text-white font-medium' : 'text-slate-400'
+                              !n.isRead ? 'text-slate-100 font-medium' : 'text-slate-400'
                             }`}>
                               {n.message}
                             </p>
@@ -155,7 +233,7 @@ const Layout = ({ children }) => {
                   <Link
                     to="/notifications"
                     onClick={() => setNotificationsOpen(false)}
-                    className="block text-center text-xs font-semibold text-primary-400 hover:text-primary-355 py-2.5 border-t border-slate-700/50 bg-dark-900/40 hover:bg-dark-900/60 transition-colors"
+                    className="block text-center text-xs font-semibold text-primary-400 hover:text-primary-355 py-2.5 border-t border-slate-700/50 bg-slate-800/40 hover:bg-slate-800/60 transition-colors"
                   >
                     Show More
                   </Link>
@@ -200,7 +278,7 @@ const Layout = ({ children }) => {
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-white truncate">{user?.name}</p>
+                      <p className="text-xs font-bold text-slate-100 truncate">{user?.name}</p>
                       <p className="text-[9px] text-slate-500 capitalize leading-none mt-0.5">
                         {user?.role === 'member' ? 'Employee' : user?.role === 'manager' ? 'Project Manager' : 'Admin'}
                       </p>
@@ -211,7 +289,7 @@ const Layout = ({ children }) => {
                   <Link
                     to="/profile"
                     onClick={() => setProfileOpen(false)}
-                    className="block w-full text-left text-xs text-slate-300 hover:text-white px-3 py-2 hover:bg-dark-700/50 rounded-lg transition-colors font-medium animate-none"
+                    className="block w-full text-left text-xs text-slate-300 hover:text-slate-100 px-3 py-2 hover:bg-slate-800 rounded-lg transition-colors font-medium animate-none"
                   >
                     Profile
                   </Link>
@@ -221,7 +299,7 @@ const Layout = ({ children }) => {
                       setProfileOpen(false)
                       logout()
                     }}
-                    className="w-full text-left text-xs text-red-400 hover:text-red-300 px-3 py-2 hover:bg-red-950/20 rounded-lg transition-colors mt-0.5 flex items-center gap-1.5 font-medium cursor-pointer"
+                    className="w-full text-left text-xs text-red-400 hover:text-red-300 px-3 py-2 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors mt-0.5 flex items-center gap-1.5 font-medium cursor-pointer"
                   >
                     <AiOutlineLogout size={14} /> Logout
                   </button>
@@ -242,9 +320,9 @@ const Layout = ({ children }) => {
         position="top-right"
         toastOptions={{
           style: {
-            background:   '#1e293b',
-            color:        '#f1f5f9',
-            border:       '1px solid #334155',
+            background:   'rgb(var(--toast-bg))',
+            color:        'rgb(var(--toast-color))',
+            border:       '1px solid rgb(var(--toast-border))',
             borderRadius: '10px',
           },
         }}

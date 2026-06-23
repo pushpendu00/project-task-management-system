@@ -93,7 +93,7 @@ export const SocketProvider = ({ children }) => {
               }}
               className="cursor-pointer flex-1"
             >
-              <div className="font-semibold text-xs text-white">New Notification</div>
+              <div className="font-semibold text-xs text-slate-100">New Notification</div>
               <div className="text-[11px] text-slate-350 mt-0.5 hover:underline break-words">{newNotification.message}</div>
             </div>
 
@@ -104,7 +104,7 @@ export const SocketProvider = ({ children }) => {
                 toast.dismiss(t.id)
                 notifToastIdsRef.current = notifToastIdsRef.current.filter((id) => id !== t.id)
               }}
-              className="absolute top-0 right-0 p-0.5 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded transition-colors text-[10px] leading-none"
+              className="absolute top-0 right-0 p-0.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded transition-colors text-[10px] leading-none"
             >
               ✕
             </button>
@@ -114,9 +114,9 @@ export const SocketProvider = ({ children }) => {
           duration: 5000,
           position: 'bottom-right',
           style: {
-            background: '#1e293b',
-            color: '#f8fafc',
-            border: '1px solid #334155',
+            background: 'rgb(var(--toast-bg))',
+            color: 'rgb(var(--toast-color))',
+            border: '1px solid rgb(var(--toast-border))',
             padding: '10px 14px',
             borderRadius: '8px',
             minWidth: '280px',

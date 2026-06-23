@@ -21,10 +21,10 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-5 border-b border-slate-700 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
+          <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-700 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
             id="modal-close-btn"
           >
             <AiOutlineClose size={18} />

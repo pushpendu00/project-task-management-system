@@ -4,8 +4,67 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
+:root {
+  /* Light Theme RGB values (comma separated) */
+  --color-dark-50: 248, 250, 252;     /* slate-50 */
+  --color-dark-100: 241, 245, 249;    /* slate-100 */
+  --color-dark-200: 226, 232, 240;    /* slate-200 */
+  --color-dark-700: 100, 116, 139;    /* slate-500 */
+  --color-dark-800: 255, 255, 255;    /* pure white */
+  --color-dark-850: 248, 250, 252;    /* slate-50 */
+  --color-dark-900: 248, 250, 252;    /* slate-50 (gives progress/scroll tracks visibility against white cards) */
+  --color-dark-950: 241, 245, 249;    /* slate-100 */
 
+  --color-slate-50: 15, 23, 42;       /* slate-900 */
+  --color-slate-100: 15, 23, 42;      /* slate-900 */
+  --color-slate-200: 30, 41, 59;      /* slate-800 */
+  --color-slate-300: 51, 65, 85;      /* slate-700 */
+  --color-slate-350: 71, 85, 105;     /* slate-600 */
+  --color-slate-400: 100, 116, 139;    /* slate-500 */
+  --color-slate-450: 100, 116, 139;    /* slate-500 */
+  --color-slate-500: 148, 163, 184;    /* slate-400 */
+  --color-slate-600: 148, 163, 184;    /* slate-400 */
+  --color-slate-700: 203, 213, 225;    /* slate-300 (standard border contrast) */
+  --color-slate-800: 226, 232, 240;    /* slate-200 (standard light border) */
+  --color-slate-900: 241, 245, 249;    /* slate-100 (standard light background/track) */
+
+  /* Toaster variables */
+  --toast-bg: 255, 255, 255;
+  --toast-color: 15, 23, 42;
+  --toast-border: 226, 232, 240;
+}
+
+.dark {
+  /* Dark Theme RGB values */
+  --color-dark-50: 248, 250, 252;
+  --color-dark-100: 241, 245, 249;
+  --color-dark-200: 226, 232, 240;
+  --color-dark-700: 51, 65, 85;       /* slate-700 */
+  --color-dark-800: 30, 41, 59;       /* dark-800 (#1e293b) */
+  --color-dark-850: 21, 31, 50;       /* dark-850 (#151f32) */
+  --color-dark-900: 15, 23, 42;       /* dark-900 (#0f172a) */
+  --color-dark-950: 2, 6, 23;         /* dark-950 (#020617) */
+
+  --color-slate-50: 248, 250, 252;
+  --color-slate-100: 241, 245, 249;
+  --color-slate-200: 226, 232, 240;
+  --color-slate-300: 203, 213, 225;
+  --color-slate-350: 148, 163, 184;
+  --color-slate-400: 148, 163, 184;
+  --color-slate-450: 203, 213, 225;
+  --color-slate-500: 100, 116, 139;
+  --color-slate-600: 71, 85, 105;
+  --color-slate-700: 51, 65, 85;
+  --color-slate-800: 30, 41, 59;
+  --color-slate-900: 15, 23, 42;
+
+  /* Toaster variables */
+  --toast-bg: 30, 41, 59;
+  --toast-color: 241, 245, 249;
+  --toast-border: 51, 65, 85;
+}
+
+@layer base {
   *,
   *::before,
   *::after {
@@ -13,7 +72,7 @@
   }
 
   body {
-    @apply bg-dark-900 text-slate-100 font-sans antialiased;
+    @apply bg-dark-950 text-slate-100 font-sans antialiased;
     min-height: 100vh;
   }
 
@@ -23,7 +82,7 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-dark-800;
+    @apply bg-dark-900;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -45,7 +104,7 @@
   }
 
   .btn-secondary {
-    @apply btn bg-dark-800 text-slate-300 hover:bg-dark-700 border border-slate-700 focus:ring-slate-500;
+    @apply btn bg-dark-800 text-slate-350 hover:bg-slate-800 border border-slate-700 focus:ring-slate-500;
   }
 
   .btn-danger {
@@ -53,7 +112,7 @@
   }
 
   .btn-ghost {
-    @apply btn text-slate-400 hover:text-white hover:bg-dark-800 focus:ring-slate-500;
+    @apply btn text-slate-400 hover:text-slate-100 hover:bg-slate-800 focus:ring-slate-500;
   }
 
   .card {
@@ -61,7 +120,7 @@
   }
 
   .input {
-    @apply w-full bg-dark-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200;
+    @apply w-full bg-dark-850 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200;
   }
 
   .label {
@@ -73,43 +132,55 @@
   }
 
   .badge-todo {
-    @apply badge bg-slate-700 text-slate-300;
+    @apply bg-slate-800 text-slate-300;
   }
 
   .badge-in-progress {
-    @apply badge bg-blue-900/60 text-blue-300;
+    @apply bg-blue-50 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300;
   }
 
   .badge-in-review {
-    @apply badge bg-yellow-900/60 text-yellow-300;
+    @apply bg-yellow-50 text-yellow-700 dark:bg-yellow-900/60 dark:text-yellow-300;
   }
 
   .badge-done {
-    @apply badge bg-green-900/60 text-green-300;
+    @apply bg-green-50 text-green-700 dark:bg-green-900/60 dark:text-green-300;
   }
 
   .badge-low {
-    @apply badge bg-slate-700 text-slate-300;
+    @apply bg-slate-800 text-slate-300;
   }
 
   .badge-medium {
-    @apply badge bg-blue-900/60 text-blue-300;
+    @apply bg-blue-50 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300;
   }
 
   .badge-high {
-    @apply badge bg-orange-900/60 text-orange-300;
+    @apply bg-orange-50 text-orange-700 dark:bg-orange-900/60 dark:text-orange-300;
   }
 
   .badge-critical {
-    @apply badge bg-red-900/60 text-red-300;
+    @apply bg-red-50 text-red-700 dark:bg-red-900/60 dark:text-red-300;
+  }
+
+  .badge-planning {
+    @apply bg-purple-50 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300;
+  }
+
+  .badge-active {
+    @apply bg-green-50 text-green-700 dark:bg-green-900/60 dark:text-green-300;
+  }
+
+  .badge-on-hold {
+    @apply bg-amber-50 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300;
   }
 
   .sidebar-link {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-dark-800 transition-all duration-200;
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-all duration-200;
   }
 
   .sidebar-link.active {
-    @apply text-primary-400 bg-primary-600/20;
+    @apply text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-600/20;
   }
 
   .page-header {
@@ -117,7 +188,7 @@
   }
 
   .page-title {
-    @apply text-2xl font-bold text-white;
+    @apply text-2xl font-bold text-slate-100;
   }
 }
 

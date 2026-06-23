@@ -99,7 +99,7 @@ const ProjectsPage = () => {
           <div className="flex bg-dark-800 rounded-lg p-0.5 border border-slate-700">
             <button
               onClick={() => handleSetViewMode('grid')}
-              className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'}`}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-slate-100'}`}
               title="Grid View"
               aria-label="Grid View"
             >
@@ -107,7 +107,7 @@ const ProjectsPage = () => {
             </button>
             <button
               onClick={() => handleSetViewMode('list')}
-              className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'}`}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-slate-100'}`}
               title="List View"
               aria-label="List View"
             >
@@ -234,8 +234,8 @@ const ProjectsPage = () => {
                 const managerName = project.assignedManager?.name || project.assignedManager?.email || 'Unassigned';
 
                 return (
-                  <tr key={project._id} className="hover:bg-dark-700/30 transition-colors duration-150">
-                    <td className="py-3.5 px-4 font-medium text-white max-w-xs">
+                  <tr key={project._id} className="hover:bg-dark-700/20 transition-colors duration-150">
+                    <td className="py-3.5 px-4 font-medium text-slate-100 max-w-xs">
                       <Link to={`/projects/${project._id}`} className="hover:text-primary-400 transition-colors block truncate font-semibold">
                         {project.name}
                       </Link>
@@ -275,7 +275,7 @@ const ProjectsPage = () => {
                         {canEdit && (
                           <button
                             onClick={() => handleEdit(project)}
-                            className="p-1.5 rounded-lg bg-dark-700 hover:bg-dark-600 text-slate-300 hover:text-white transition-colors"
+                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
                             title="Edit Project"
                           >
                             <AiOutlineEdit size={16} />
@@ -284,7 +284,7 @@ const ProjectsPage = () => {
                         {user?.role === 'admin' && (
                           <button
                             onClick={() => handleDeleteClick(project._id)}
-                            className="p-1.5 rounded-lg bg-dark-700 hover:bg-red-950/40 text-slate-400 hover:text-red-400 border border-transparent hover:border-red-900/30 transition-colors"
+                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-red-600 text-red-600 dark:text-red-400 hover:text-white transition-colors"
                             title="Delete Project"
                           >
                             <AiOutlineDelete size={16} />

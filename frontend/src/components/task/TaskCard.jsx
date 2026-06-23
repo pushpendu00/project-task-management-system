@@ -12,13 +12,20 @@ const getAvatarUrl = (path) => {
   return `${host}${path}`
 }
 
+const PRIORITY_BORDERS = {
+  low:      'border-l-4 border-l-slate-400',
+  medium:   'border-l-4 border-l-blue-500',
+  high:     'border-l-4 border-l-orange-500',
+  critical: 'border-l-4 border-l-red-500',
+}
+
 const TaskCard = ({ task, onClick, onDragStart }) => (
   <div
     draggable
     onDragStart={(e) => onDragStart?.(e, task._id)}
     onClick={() => onClick?.(task)}
-    className="card p-3 cursor-pointer hover:border-slate-600 transition-all duration-200
-               hover:shadow-lg hover:shadow-primary-900/10 animate-fade-in group select-none flex flex-col justify-between h-full"
+    className={`card p-3 cursor-pointer hover:border-slate-600 transition-all duration-200
+               hover:shadow-lg hover:shadow-primary-900/10 animate-fade-in group select-none flex flex-col justify-between h-full ${PRIORITY_BORDERS[task.priority] || 'border-l-4 border-l-slate-500'}`}
     id={`task-card-${task._id}`}
   >
     <div>
@@ -36,7 +43,7 @@ const TaskCard = ({ task, onClick, onDragStart }) => (
           </span>
         )}
       </div>
-      <p className="text-xs font-semibold text-slate-200 mb-1 line-clamp-2 group-hover:text-white leading-tight">
+      <p className="text-xs font-semibold text-slate-200 mb-1 line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 leading-tight">
         {task.title}
       </p>
       {task.description && (

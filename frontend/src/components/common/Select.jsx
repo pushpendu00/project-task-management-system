@@ -137,15 +137,15 @@ const Select = ({
             onClick={() => handleSelect(opt.value)}
             className={`w-full text-left text-xs px-2.5 py-1.5 rounded transition-colors cursor-pointer flex items-center justify-between font-medium ${
               isSelected
-                ? 'bg-primary-600/20 text-white'
-                : 'text-slate-350 hover:text-white hover:bg-dark-700/50'
+                ? 'bg-primary-600/20 text-primary-600 dark:text-primary-400 font-bold'
+                : 'text-slate-350 hover:text-slate-100 hover:bg-slate-800'
             }`}
           >
             <div className="flex items-center min-w-0 flex-1">
               {renderAvatar(opt.avatar, opt.name)}
               <span className="whitespace-normal break-words pr-2">{opt.label}</span>
             </div>
-            {isSelected && <AiOutlineCheck className="text-primary-400 flex-shrink-0" size={12} />}
+            {isSelected && <AiOutlineCheck className="text-primary-600 dark:text-primary-400 flex-shrink-0" size={12} />}
           </button>
         )
       })}

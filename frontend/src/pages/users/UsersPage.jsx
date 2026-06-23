@@ -210,7 +210,7 @@ const UsersPage = () => {
                         )}
                       </div>
                       <div>
-                        <p className="font-semibold text-white">{u.name}</p>
+                        <p className="font-semibold text-slate-100">{u.name}</p>
                         <p className="text-xs text-slate-500 mt-0.5">{u.email}</p>
                       </div>
                     </td>
@@ -235,15 +235,15 @@ const UsersPage = () => {
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => openEditModal(u)}
-                          className="p-1.5 rounded hover:bg-dark-700/50 text-slate-400 hover:text-white transition-colors"
+                          className="p-1.5 rounded hover:bg-slate-800 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
                           title="Edit role/status"
                         >
                           <AiOutlineEdit size={16} />
                         </button>
                         <button
                           onClick={() => toggleDeactivateClick(u)}
-                          className={`p-1.5 rounded hover:bg-dark-700/50 transition-colors ${
-                            u.isActive ? 'text-slate-500 hover:text-red-400' : 'text-slate-500 hover:text-green-400'
+                          className={`p-1.5 rounded transition-colors ${
+                            u.isActive ? 'text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white' : 'text-green-600 dark:text-green-400 hover:bg-green-600 hover:text-white'
                           }`}
                           title={u.isActive ? 'Deactivate User' : 'Reactivate User'}
                         >
