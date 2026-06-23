@@ -250,6 +250,7 @@ const TaskDetailPage = () => {
         setUploadingFile(true)
         try {
           const formData = new FormData()
+          formData.append('folder', 'chat-files')
           formData.append('file', selectedFile)
 
           const { data } = await api.post('/uploads', formData, {
@@ -570,7 +571,7 @@ const TaskDetailPage = () => {
                                     </div>
                                   )}
                                   <div className="flex items-center justify-between gap-3 mb-0.5">
-                                    <span className={`font-bold text-[10px] ${isCurrentUser ? 'text-white/90' : 'text-slate-300'}`}>{item.user?.name}</span>
+                                    <span className={`font-bold text-[10px] ${isCurrentUser ? 'text-primary-200' : 'text-primary-600 dark:text-primary-400'}`}>{item.user?.name}</span>
                                     <span className={`text-[8px] ${isCurrentUser ? 'text-white/60' : 'text-slate-500'}`}>{formatRelativeTime(item.createdAt)}</span>
                                   </div>
                                   {item.text && <p className="text-[11px] whitespace-pre-wrap leading-relaxed">{item.text}</p>}

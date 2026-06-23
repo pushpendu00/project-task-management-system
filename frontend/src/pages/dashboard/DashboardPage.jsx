@@ -6,7 +6,7 @@ import {
   AiOutlineTeam, AiOutlineArrowRight, AiOutlineDashboard,
   AiOutlineRise, AiOutlineHistory, AiOutlineBell
 } from 'react-icons/ai'
-import { authUserAtom }  from '../../recoil/atoms/authAtom'
+import { authUserAtom } from '../../recoil/atoms/authAtom'
 import api from '../../api/axios'
 import Spinner from '../../components/common/Spinner'
 
@@ -54,16 +54,16 @@ const CompletionTrendChart = ({ trend }) => {
   const width = 500
   const paddingX = 40
   const paddingY = 20
-  
+
   const chartWidth = width - paddingX * 2
   const chartHeight = height - paddingY * 2
-  
+
   const points = trend.map((t, idx) => {
     const x = paddingX + (idx * (chartWidth / (trend.length - 1)))
     const y = height - paddingY - (t.count / maxVal) * chartHeight
     return { x, y }
   })
-  
+
   const linePath = `M ${points.map(p => `${p.x},${p.y}`).join(' L ')}`
   const areaPath = `${linePath} L ${points[points.length - 1].x},${height - paddingY} L ${points[0].x},${height - paddingY} Z`
 
@@ -76,7 +76,7 @@ const CompletionTrendChart = ({ trend }) => {
             <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.0" />
           </linearGradient>
         </defs>
-        
+
         {/* Horizontal grid lines */}
         {[0, 0.5, 1].map((ratio, idx) => {
           const y = paddingY + ratio * chartHeight
@@ -91,7 +91,7 @@ const CompletionTrendChart = ({ trend }) => {
 
         {/* Area fill */}
         <path d={areaPath} fill="url(#chartAreaGrad)" />
-        
+
         {/* Line */}
         <path d={linePath} fill="none" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
 
@@ -109,7 +109,7 @@ const CompletionTrendChart = ({ trend }) => {
             <title>{`${trend[idx].count} tasks completed`}</title>
           </g>
         ))}
-        
+
         {/* X Axis labels */}
         {trend.map((t, idx) => {
           const x = paddingX + (idx * (chartWidth / (trend.length - 1)))
@@ -178,22 +178,22 @@ const DashboardPage = () => {
             </span>. Here is a summary of your workspace status.
           </p>
         </div>
-        <div className="text-slate-500 text-[10px] font-bold bg-dark-800 border border-slate-700/50 px-2.5 py-1 rounded-lg flex items-center gap-1.5 flex-shrink-0">
+        {/* <div className="text-slate-500 text-[10px] font-bold bg-dark-800 border border-slate-700/50 px-2.5 py-1 rounded-lg flex items-center gap-1.5 flex-shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
           System Online
-        </div>
+        </div> */}
       </div>
 
       {/* KPI GRID FOR ADMIN */}
       {isAdmin && stats && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            <StatCard icon={AiOutlineProject}     label="Total Projects"     value={stats.totalProjects}     color="bg-blue-600" />
-            <StatCard icon={AiOutlineClockCircle} label="Active Projects"    value={stats.activeProjects}    color="bg-amber-500" />
-            <StatCard icon={AiOutlineCheckSquare} label="Completed Proj"     value={stats.completedProjects} color="bg-green-600" />
-            <StatCard icon={AiOutlineCheckSquare} label="Total Tasks"        value={stats.totalTasks}        color="bg-indigo-600" />
-            <StatCard icon={AiOutlineCheckSquare} label="Completed Tasks"    value={stats.completedTasks}    color="bg-teal-600" />
-            <StatCard icon={AiOutlineClockCircle} label="Overdue Tasks"      value={stats.overdueTasks}      color="bg-red-600" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <StatCard icon={AiOutlineProject} label="Total Projects" value={stats.totalProjects} color="bg-blue-600" />
+            <StatCard icon={AiOutlineClockCircle} label="Active Projects" value={stats.activeProjects} color="bg-amber-500" />
+            <StatCard icon={AiOutlineCheckSquare} label="Completed Proj" value={stats.completedProjects} color="bg-green-600" />
+            <StatCard icon={AiOutlineCheckSquare} label="Total Tasks" value={stats.totalTasks} color="bg-indigo-600" />
+            <StatCard icon={AiOutlineCheckSquare} label="Completed Tasks" value={stats.completedTasks} color="bg-teal-600" />
+            <StatCard icon={AiOutlineClockCircle} label="Overdue Tasks" value={stats.overdueTasks} color="bg-red-600" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -241,7 +241,7 @@ const DashboardPage = () => {
                 </p>
               </div>
             </div>
-            
+
             {/* Quick Actions */}
             <div className="card p-5 space-y-3.5 shadow-md">
               <h3 className="text-xs font-bold text-slate-100 uppercase tracking-wider border-b border-slate-700/50 pb-1.5">
@@ -263,13 +263,13 @@ const DashboardPage = () => {
       {/* KPI GRID FOR PROJECT MANAGER */}
       {isManager && stats && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            <StatCard icon={AiOutlineProject}     label="Managed Projects"   value={stats.totalProjects}     color="bg-blue-600" />
-            <StatCard icon={AiOutlineClockCircle} label="Active Projects"    value={stats.activeProjects}    color="bg-amber-500" />
-            <StatCard icon={AiOutlineCheckSquare} label="Completed Proj"     value={stats.completedProjects} color="bg-green-600" />
-            <StatCard icon={AiOutlineCheckSquare} label="Active Tasks"       value={stats.activeTasks}       color="bg-indigo-600" />
-            <StatCard icon={AiOutlineClockCircle} label="Due Soon (7 days)"  value={stats.upcomingDeadlines} color="bg-orange-600" />
-            <StatCard icon={AiOutlineTeam}        label="Team Hours"         value={`${stats.employeeProductivity} hrs`} color="bg-teal-600" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <StatCard icon={AiOutlineProject} label="Managed Projects" value={stats.totalProjects} color="bg-blue-600" />
+            <StatCard icon={AiOutlineClockCircle} label="Active Projects" value={stats.activeProjects} color="bg-amber-500" />
+            <StatCard icon={AiOutlineCheckSquare} label="Completed Proj" value={stats.completedProjects} color="bg-green-600" />
+            <StatCard icon={AiOutlineCheckSquare} label="Active Tasks" value={stats.activeTasks} color="bg-indigo-600" />
+            <StatCard icon={AiOutlineClockCircle} label="Due Soon (7 days)" value={stats.upcomingDeadlines} color="bg-orange-600" />
+            <StatCard icon={AiOutlineTeam} label="Team Hours" value={`${stats.employeeProductivity} hrs`} color="bg-teal-600" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -331,13 +331,13 @@ const DashboardPage = () => {
       {/* KPI GRID FOR EMPLOYEE */}
       {!isAdmin && !isManager && stats && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            <StatCard icon={AiOutlineCheckSquare} label="Assigned Tasks"  value={stats.assignedTasks}   color="bg-blue-600" />
-            <StatCard icon={AiOutlineClockCircle} label="Tasks Due Soon"   value={stats.tasksDueSoon}     color="bg-red-600" />
-            <StatCard icon={AiOutlineCheckSquare} label="Completed Tasks"  value={stats.completedTasks}   color="bg-green-600" />
-            <StatCard icon={AiOutlineProject}     label="My Projects"     value={stats.totalProjects}     color="bg-indigo-600" />
-            <StatCard icon={AiOutlineClockCircle} label="Active Projects"    value={stats.activeProjects}    color="bg-amber-500" />
-            <StatCard icon={AiOutlineCheckSquare} label="Completed Proj"     value={stats.completedProjects} color="bg-teal-600" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <StatCard icon={AiOutlineCheckSquare} label="Assigned Tasks" value={stats.assignedTasks} color="bg-blue-600" />
+            <StatCard icon={AiOutlineClockCircle} label="Tasks Due Soon" value={stats.tasksDueSoon} color="bg-red-600" />
+            <StatCard icon={AiOutlineCheckSquare} label="Completed Tasks" value={stats.completedTasks} color="bg-green-600" />
+            <StatCard icon={AiOutlineProject} label="My Projects" value={stats.totalProjects} color="bg-indigo-600" />
+            <StatCard icon={AiOutlineClockCircle} label="Active Projects" value={stats.activeProjects} color="bg-amber-500" />
+            <StatCard icon={AiOutlineCheckSquare} label="Completed Proj" value={stats.completedProjects} color="bg-teal-600" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

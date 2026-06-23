@@ -15,7 +15,12 @@ if (!fs.existsSync(uploadsDir)) {
 // Multer storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadsDir);
+    const targetFolder = req.body.folder || 'general';
+    const folderPath = path.join(uploadsDir, targetFolder);
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true });
+    }
+    cb(null, folderPath);
   },
   filename: (req, file, cb) => {
     // Generate unique filename to avoid duplicates
@@ -37,7 +42,8 @@ router.post('/', protect, upload.single('file'), (req, res) => {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
-    const fileUrl = `/uploads/${req.file.filename}`;
+    const targetFolder = req.body.folder || 'general';
+    const fileUrl = `/uploads/${targetFolder}/${req.file.filename}`;
 
     res.status(200).json({
       success: true,

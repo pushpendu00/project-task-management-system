@@ -225,6 +225,7 @@ const ProfilePage = () => {
 
         const file = new File([blob], 'avatar-cropped.jpg', { type: 'image/jpeg' })
         const uploadData = new FormData()
+        uploadData.append('folder', 'avatars')
         uploadData.append('file', file)
 
         const { data } = await api.post('/uploads', uploadData, {
@@ -281,6 +282,21 @@ const ProfilePage = () => {
       toast.error(error.response?.data?.message || 'Failed to update profile')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleRemoveAvatar = async () => {
+    try {
+      const { data } = await api.put(`/users/${user._id}`, { avatar: '' })
+      if (data.success) {
+        setUser(data.user)
+        setFormData(prev => ({ ...prev, avatar: '' }))
+        localStorage.setItem('user', JSON.stringify(data.user))
+        toast.success('Profile photo removed successfully!')
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error('Failed to remove profile photo')
     }
   }
 
@@ -363,13 +379,27 @@ const ProfilePage = () => {
                 </div>
               )}
             </div>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="text-[10px] text-primary-400 hover:text-primary-300 font-semibold uppercase tracking-wider"
-            >
-              Change Profile Photo
-            </button>
+            <div className="flex items-center justify-center gap-4">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-[10px] text-primary-400 hover:text-primary-300 font-semibold uppercase tracking-wider"
+              >
+                Change Photo
+              </button>
+              {formData.avatar && (
+                <>
+                  <span className="text-slate-600 text-[10px]">|</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, avatar: '' })}
+                    className="text-[10px] text-red-500 hover:text-red-400 font-semibold uppercase tracking-wider"
+                  >
+                    Remove Photo
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -564,6 +594,15 @@ const ProfilePage = () => {
                   {user.role === 'member' ? 'Employee' : user.role === 'manager' ? 'Project Manager' : 'Admin'}
                 </p>
                 <p className="text-[11px] text-slate-500">Joined on {formatDate(user.createdAt)}</p>
+                {user.avatar && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveAvatar}
+                    className="text-[10px] text-red-500 hover:text-red-400 font-semibold uppercase tracking-wider mt-1 block"
+                  >
+                    Remove Photo
+                  </button>
+                )}
               </div>
             </div>
 

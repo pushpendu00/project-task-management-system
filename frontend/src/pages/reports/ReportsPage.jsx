@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import toast from 'react-hot-toast'
 import {
   AiOutlineFilePdf, AiOutlinePieChart, AiOutlineTeam,
@@ -42,6 +42,25 @@ const ReportsPage = () => {
   const [empLoading, setEmpLoading] = useState(false)
   const [auditLogs, setAuditLogs] = useState([])
   const [auditLoading, setAuditLoading] = useState(false)
+
+  // Custom Dropdown State
+  const [projectSearch, setProjectSearch] = useState('')
+  const [projectDropdownOpen, setProjectDropdownOpen] = useState(false)
+  const projectDropdownRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (projectDropdownRef.current && !projectDropdownRef.current.contains(event.target)) {
+        setProjectDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const filteredProjects = projectsList
+    .filter(p => p.name.toLowerCase().includes(projectSearch.toLowerCase()))
+    .slice(0, 5) // max latest 5 projects
 
   // Fetch list of projects for dropdown selection
   useEffect(() => {
@@ -100,11 +119,11 @@ const ReportsPage = () => {
 
     toast.loading('Generating PDF report...', { id: 'pdf-toast' })
     const opt = {
-      margin:       0.4,
-      filename:     `TaskFlow_${activeTab}_report.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, backgroundColor: '#0f172a', useCORS: true },
-      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      margin: 0.4,
+      filename: `TaskFlow_${activeTab}_report.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, backgroundColor: '#0f172a', useCORS: true },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
     }
 
     html2pdf().set(opt).from(element).save()
@@ -131,18 +150,16 @@ const ReportsPage = () => {
       <div className="flex border-b border-slate-700/50 gap-4">
         <button
           onClick={() => setActiveTab('projects')}
-          className={`pb-2.5 font-semibold text-sm border-b-2 transition-all ${
-            activeTab === 'projects' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
+          className={`pb-2.5 font-semibold text-sm border-b-2 transition-all ${activeTab === 'projects' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
         >
           Project Performance
         </button>
         {isAdmin && (
           <button
             onClick={() => setActiveTab('employees')}
-            className={`pb-2.5 font-semibold text-sm border-b-2 transition-all ${
-              activeTab === 'employees' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
+            className={`pb-2.5 font-semibold text-sm border-b-2 transition-all ${activeTab === 'employees' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
           >
             Employee Productivity
           </button>
@@ -150,9 +167,8 @@ const ReportsPage = () => {
         {isAdmin && (
           <button
             onClick={() => setActiveTab('audit')}
-            className={`pb-2.5 font-semibold text-sm border-b-2 transition-all ${
-              activeTab === 'audit' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
+            className={`pb-2.5 font-semibold text-sm border-b-2 transition-all ${activeTab === 'audit' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
           >
             System Audit Trail
           </button>
@@ -166,17 +182,57 @@ const ReportsPage = () => {
           <div className="space-y-6">
             <div className="flex items-center gap-4 flex-wrap bg-dark-800/40 p-4 rounded-xl border border-slate-800">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Select Project:</span>
-              <Select
-                value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="w-80"
-                buttonClassName="py-2 px-3 bg-dark-900 border border-slate-700 rounded-lg text-slate-200 text-xs"
-                id="report-project-select"
-              >
-                {projectsList.map(p => (
-                  <option key={p._id} value={p._id}>{p.name}</option>
-                ))}
-              </Select>
+              <div className="relative flex-shrink-0" ref={projectDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setProjectDropdownOpen(!projectDropdownOpen)}
+                  className="w-80 bg-dark-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none flex items-center justify-between hover:border-slate-600 transition-colors"
+                >
+                  <span className="truncate">
+                    {projectsList.find(p => p._id === selectedProjectId)?.name || 'Select a project...'}
+                  </span>
+                  <span className="text-[10px] text-slate-400 ml-1">▼</span>
+                </button>
+
+                {projectDropdownOpen && (
+                  <div className="absolute z-50 left-0 mt-1 w-80 bg-dark-850 border border-slate-700/60 rounded-lg shadow-xl p-2 space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Search project name..."
+                      value={projectSearch}
+                      onChange={(e) => setProjectSearch(e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-dark-900 border border-slate-700 rounded text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      autoFocus
+                    />
+                    <div className="max-h-[160px] overflow-y-auto space-y-0.5 custom-scrollbar">
+                      {filteredProjects.length > 0 ? (
+                        filteredProjects.map((p) => (
+                          <button
+                            key={p._id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedProjectId(p._id)
+                              setProjectDropdownOpen(false)
+                              setProjectSearch('')
+                            }}
+                            className={`w-full text-left px-2.5 py-1.5 rounded text-xs transition-colors flex items-center justify-between ${
+                              selectedProjectId === p._id
+                                ? 'bg-primary-600/20 text-primary-400 font-medium'
+                                : 'text-slate-350 hover:bg-slate-800 hover:text-slate-100'
+                            }`}
+                          >
+                            <span className="truncate">{p.name}</span>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="text-center py-2 text-xs text-slate-500">
+                          No projects found
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {projLoading ? (
@@ -222,12 +278,11 @@ const ReportsPage = () => {
                           <div className="flex items-center gap-3 w-2/3">
                             <div className="w-full bg-dark-900 rounded-full h-2">
                               <div
-                                className={`h-2 rounded-full ${
-                                  status === 'completed' ? 'bg-green-500' :
-                                  status === 'blocked' ? 'bg-red-500' :
-                                  status === 'in-progress' ? 'bg-blue-500' :
-                                  status === 'in-review' ? 'bg-yellow-500' : 'bg-slate-500'
-                                }`}
+                                className={`h-2 rounded-full ${status === 'completed' ? 'bg-green-500' :
+                                    status === 'blocked' ? 'bg-red-500' :
+                                      status === 'in-progress' ? 'bg-blue-500' :
+                                        status === 'in-review' ? 'bg-yellow-500' : 'bg-slate-500'
+                                  }`}
                                 style={{ width: `${projectReport.totalTasks > 0 ? (count / projectReport.totalTasks) * 100 : 0}%` }}
                               />
                             </div>
@@ -250,11 +305,10 @@ const ReportsPage = () => {
                           <div className="flex items-center gap-3 w-2/3">
                             <div className="w-full bg-dark-900 rounded-full h-2">
                               <div
-                                className={`h-2 rounded-full ${
-                                  priority === 'critical' ? 'bg-red-600' :
-                                  priority === 'high' ? 'bg-orange-500' :
-                                  priority === 'medium' ? 'bg-blue-500' : 'bg-slate-500'
-                                }`}
+                                className={`h-2 rounded-full ${priority === 'critical' ? 'bg-red-600' :
+                                    priority === 'high' ? 'bg-orange-500' :
+                                      priority === 'medium' ? 'bg-blue-500' : 'bg-slate-500'
+                                  }`}
                                 style={{ width: `${projectReport.totalTasks > 0 ? (count / projectReport.totalTasks) * 100 : 0}%` }}
                               />
                             </div>
@@ -294,17 +348,17 @@ const ReportsPage = () => {
                       {employeeReport.map((emp) => (
                         <tr key={emp.employeeId} className="hover:bg-dark-800/10">
                           <td className="py-4 px-6 flex items-center gap-3">
-                             <div className="w-8 h-8 rounded-full bg-slate-700 font-bold text-slate-200 text-xs flex items-center justify-center flex-shrink-0 overflow-hidden">
-                               {emp.avatar ? (
-                                 <img
-                                   src={getAvatarUrl(emp.avatar)}
-                                   alt={emp.name}
-                                   className="w-full h-full object-cover"
-                                 />
-                               ) : (
-                                 getInitials(emp.name)
-                               )}
-                             </div>
+                            <div className="w-8 h-8 rounded-full bg-slate-700 font-bold text-slate-200 text-xs flex items-center justify-center flex-shrink-0 overflow-hidden">
+                              {emp.avatar ? (
+                                <img
+                                  src={getAvatarUrl(emp.avatar)}
+                                  alt={emp.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                getInitials(emp.name)
+                              )}
+                            </div>
                             <div>
                               <p className="font-semibold text-slate-100">{emp.name}</p>
                               <p className="text-[10px] text-slate-500">{emp.email}</p>

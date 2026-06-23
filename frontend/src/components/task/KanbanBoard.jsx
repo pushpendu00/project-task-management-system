@@ -43,6 +43,12 @@ const KanbanBoard = ({ onTaskClick }) => {
     const taskId = e.dataTransfer.getData('text/plain')
     if (!taskId) return
 
+    const isAlreadyInCol = tasksByStatus[colKey]?.some(t => t._id === taskId)
+    if (isAlreadyInCol) {
+      setDraggedOverCol(null)
+      return
+    }
+
     try {
       await updateTask(taskId, { status: colKey })
     } catch (error) {

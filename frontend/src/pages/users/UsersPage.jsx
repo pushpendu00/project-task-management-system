@@ -25,7 +25,7 @@ const UsersPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [confirmToggleUser, setConfirmToggleUser] = useState(null)
-  
+
   // Form fields
   const [form, setForm] = useState({
     name: '',
@@ -215,18 +215,16 @@ const UsersPage = () => {
                       </div>
                     </td>
                     <td className="py-4 px-6 capitalize">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                        u.role === 'admin' ? 'bg-primary-950/40 text-primary-400 border border-primary-800/40' :
-                        u.role === 'manager' ? 'bg-purple-950/40 text-purple-400 border border-purple-800/40' :
-                        'bg-blue-950/40 text-blue-400 border border-blue-800/40'
-                      }`}>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${u.role === 'admin' ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-400 border border-primary-200 dark:border-primary-800/40' :
+                          u.role === 'manager' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/40' :
+                            'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40'
+                        }`}>
                         {u.role === 'member' ? 'employee' : u.role}
                       </span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
-                        u.isActive ? 'text-green-400' : 'text-slate-500'
-                      }`}>
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${u.isActive ? 'text-green-400' : 'text-slate-500'
+                        }`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${u.isActive ? 'bg-green-400 animate-pulse' : 'bg-slate-500'}`} />
                         {u.isActive ? 'Active' : 'Deactivated'}
                       </span>
@@ -242,9 +240,8 @@ const UsersPage = () => {
                         </button>
                         <button
                           onClick={() => toggleDeactivateClick(u)}
-                          className={`p-1.5 rounded transition-colors ${
-                            u.isActive ? 'text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white' : 'text-green-600 dark:text-green-400 hover:bg-green-600 hover:text-white'
-                          }`}
+                          className={`p-1.5 rounded transition-colors ${u.isActive ? 'text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white' : 'text-green-600 dark:text-green-400 hover:bg-green-600 hover:text-white'
+                            }`}
                           title={u.isActive ? 'Deactivate User' : 'Reactivate User'}
                         >
                           {u.isActive ? <AiOutlineCloseCircle size={16} /> : <AiOutlineCheckCircle size={16} />}

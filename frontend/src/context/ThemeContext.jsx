@@ -9,7 +9,7 @@ export const ThemeProvider = ({ children }) => {
     if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
       return savedTheme
     }
-    return 'system'
+    return 'dark'
   })
 
   const [activeTheme, setActiveTheme] = useState('dark')
@@ -22,7 +22,7 @@ export const ThemeProvider = ({ children }) => {
     const updateDOM = (applied) => {
       const root = document.documentElement
       const body = document.body
-      
+
       if (applied === 'dark') {
         root.classList.add('dark')
         root.classList.remove('light')
