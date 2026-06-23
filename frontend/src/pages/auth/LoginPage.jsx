@@ -7,7 +7,7 @@ import useAuth from '../../hooks/useAuth'
 
 const LoginPage = () => {
   const { login, loading } = useAuth()
-  const [form, setForm]    = useState({ email: '', password: '' })
+  const [form, setForm] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState({})
   const [submitError, setSubmitError] = useState('')
   const [adminContact, setAdminContact] = useState(null)
@@ -21,7 +21,7 @@ const LoginPage = () => {
 
   const validate = () => {
     const newErrors = {}
-    if (!form.email)    newErrors.email    = 'Email is required'
+    if (!form.email) newErrors.email = 'Email is required'
     if (!form.password) newErrors.password = 'Password is required'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -66,22 +66,22 @@ const LoginPage = () => {
           className="absolute inset-0 w-full h-full object-cover opacity-45 select-none"
         />
         <div className="absolute inset-0 bg-gradient-to-tr from-dark-950 via-dark-950/70 to-primary-950/20" />
-        
+
         <div className="relative z-10 flex flex-col justify-between p-12 h-full text-white">
           <span className="text-2xl font-bold tracking-wider">
             <span className="text-primary-400">Task</span>Flow
           </span>
-          
+
           <div className="max-w-md">
             <h2 className="text-3xl font-extrabold leading-tight mb-4 text-slate-100">
-              Empower your team. <br/>
+              Empower your team. <br />
               Streamline your workflow.
             </h2>
             <p className="text-slate-400 text-sm leading-relaxed">
               Experience the next generation of team collaboration, task tracking, and workspace analytics. Drive alignment, increase transparency, and deliver high-impact results effortlessly.
             </p>
           </div>
-          
+
           <div className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">
             © {new Date().getFullYear()} TaskFlow Inc. All rights reserved.
           </div>
@@ -101,7 +101,7 @@ const LoginPage = () => {
             <h1 className="text-2xl font-bold text-slate-100">Sign In</h1>
             <p className="text-slate-400 mt-2 text-sm">Welcome back! Sign in to your workspace</p>
           </div>
-          
+
           <form onSubmit={handleSubmit} id="login-form" className="space-y-5">
             {submitError && (
               <div className="bg-red-950/40 border border-red-900/60 text-red-200 text-xs px-4 py-3 rounded-lg flex flex-col gap-2 animate-slide-in">
@@ -120,17 +120,17 @@ const LoginPage = () => {
                 )}
               </div>
             )}
-            <Input id="login-email"    label="Email Address" name="email"    type="email"    value={form.email}    onChange={handleChange} placeholder="you@example.com" error={errors.email}    />
-            <Input id="login-password" label="Password"      name="password" type="password" value={form.password} onChange={handleChange} placeholder="••••••••"         error={errors.password} />
+            <Input id="login-email" label="Email Address" name="email" type="email" value={form.email} onChange={handleChange} placeholder="you@example.com" error={errors.email} />
+            <Input id="login-password" label="Password" name="password" type="password" value={form.password} onChange={handleChange} placeholder="••••••••" error={errors.password} />
             <Button type="submit" variant="primary" loading={loading} className="w-full justify-center" id="login-submit-btn">
               Sign In
             </Button>
           </form>
-          
-          <p className="text-center text-sm text-slate-500 mt-6">
+
+          {/* <p className="text-center text-sm text-slate-500 mt-6">
             Don't have an account?{' '}
             <Link to="/register" className="text-primary-400 hover:text-primary-300 font-medium">Sign up</Link>
-          </p>
+          </p> */}
         </div>
 
         {/* Footer Area */}
@@ -142,7 +142,7 @@ const LoginPage = () => {
             <span>•</span>
             <a href="#support" className="hover:text-slate-350 hover:underline">Support</a>
           </div>
-          
+
           <div className="flex justify-center gap-3 text-slate-500">
             <a href="#github" className="hover:text-slate-100 transition-colors" title="GitHub">
               <AiOutlineGithub size={18} />
